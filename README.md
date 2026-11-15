@@ -29,7 +29,7 @@ XP ve seviyeler (Çırak → Efsane), günlük hedef halkası, seri (🔥) ve se
 Nirvana, Guns N' Roses ve Eric Clapton'dan 18 şarkı, zorluk sırasıyla. Her şarkı için gereken dersler gösterilir; hepsi bitince **"Hazırsın"**. Telif hakkı nedeniyle şarkıların tab'ları uygulamada yoktur: Ultimate Guitar ya da Songsterr'den kopyaladığın **ASCII tab'ı yapıştırırsın**, uygulama onu ölçü ölçü, mikrofonla kontrol edilen bir pratik görevine çevirir (bekleme modu veya metronomlu tempo modu).
 
 ## Kurulum
-[Releases](../../releases) sayfasından `Perde.apk` dosyasını indirip telefonuna kur (Android 8.0+). İlk açılışta mikrofon ve bildirim izni istenir.
+**[Perde.apk dosyasını indir](apk/Perde.apk)** (ya da [Releases](../../releases) sayfasından) ve telefonuna kur (Android 8.0+). İlk açılışta mikrofon ve bildirim izni istenir.
 
 En iyi sonuç için: telefonu gitara 30–60 cm uzaklıkta tut, sessiz bir ortamda çal, zamanlama görevlerinden önce **Profil → Ayarlar → Gecikme ayarı** ile kalibrasyon yap. Kulaklık takarsan metronom mikrofona karışmaz.
 
