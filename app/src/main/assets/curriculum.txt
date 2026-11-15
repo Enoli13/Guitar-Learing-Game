@@ -1,24 +1,22 @@
 # u01 | Başlangıç | Gitarı tanı, akort et, ilk sesler
-## u01a | Gitarın anatomisi
-> Gitar üç ana bölümden oluşur: GÖVDE (sesi büyütür ya da manyetikler sesi alır), SAP (üzerinde KLAVYE ve PERDELER vardır) ve KAFA (tellerin gerginliğini ayarlayan BURGULAR buradadır).
-> Teller köprüden (eşik) başlar, klavye boyunca uzanır, kafadaki eşikten geçip burgulara sarılır. Bir perdeye basmak telin titreşen boyunu kısaltır, ses incelir.
+## u01a | Teller ve numaraları
+> Gitarın 6 teli var ve tab'larda, derslerde hep NUMARAYLA anılırlar. Numara İNCE telden başlar: 1. tel en ince (yere en yakın), 6. tel en kalın (sana/tavana en yakın).
+> Standart akortta, kalından inceye: 6. tel E – 5. tel A – 4. tel D – 3. tel G – 2. tel B – 1. tel E. Yani iki E teli var: kalın E (6) ve ince E (1).
 > ---
-> Teller 6'dan 1'e numaralanır. 6. tel en KALIN ve en PES (kalın sesli) teldir, sana en yakın olandır. 1. tel en İNCE ve en TİZ teldir.
-> Standart akortta teller, kalından inceye: E – A – D – G – B – E (Mi – La – Re – Sol – Si – Mi). Akılda tutmak için: "Elma Armut Dut Gelir Bize Erken".
-q: Gitarda tellerin gerginliğini ayarlayan parça hangisidir? | Burgular | Perdeler | Köprü | Manyetikler
-q: 6. tel hangisidir? | En kalın, en pes tel | En ince, en tiz tel | Ortadaki tel | Sana en uzak tel
-q: Standart akortta tellerin sırası (6'dan 1'e) nedir? | E A D G B E | E B G D A E | A D G C E A | E A D G C F
-q: Bir perdeye bastığında ses ne olur? | İncelir (tizleşir) | Kalınlaşır (pesleşir) | Değişmez | Kesilir
-q: "Elma Armut Dut Gelir Bize Erken" hangi teli 3. tel olarak verir? | G (Sol) | D (Re) | B (Si) | A (La)
-## u01b | Duruş, pena ve ilk ses
-> Otururken gitarın beli sağ bacağına oturur, sap hafifçe yukarı bakar. Sırtın dik, omuzların gevşek olsun.
-> Penayı başparmak ile işaret parmağının yan tarafı arasında tut; ucu sadece 2-3 mm dışarıda kalsın. Bilekten, küçük hareketlerle çal; koldan değil.
-> ---
-> Sol elde başparmak sapın arkasında, yaklaşık orta parmağının hizasında durur. Perdeye basarken parmak ucunu perde telinin hemen ARKASINA koy (tel üzerinde değil). Böylece daha az güçle temiz ses çıkar.
-> Tiny Habits ipucu: Gitarı her gördüğünde "sadece 2 dakika" de. Küçük başla, sonra kendini kutla.
-q: Perdeye basarken parmak nereye konur? | Perde telinin hemen arkasına | Tam perde telinin üstüne | İki perdenin tam ortasına | Fark etmez
-q: Pena tutarken ucu ne kadar dışarıda kalmalı? | 2-3 mm | 1 cm | 2 cm | Tamamı
-q: Pena hareketi esas olarak nereden gelmeli? | Bilekten | Omuzdan | Dirsekten | Parmak uçlarından
+> Ezber kalıbı (kalından inceye, kelimelerin baş harfleri): "Elma Armut Dut Gelir Bize Erken" → E A D G B E.
+q: Tel numaraları hangi telden başlar? | En ince telden (1. tel = ince E) | En kalın telden | Ortadaki telden | Gitara göre değişir
+q: Kalından inceye standart akort hangisi? | E A D G B E | E B G D A E | A D G C E A | E A D G C F
+q: 3. tel (inceden sayınca üçüncü) hangi nota? | G (Sol) | D (Re) | B (Si) | A (La)
+q: 5. tel hangi nota? | A (La) | D (Re) | E (Mi) | G (Sol)
+q: 2. tel hangi nota? | B (Si) | G (Sol) | E (Mi) | D (Re)
+g: open s=6-1
+## u01b | Temiz ses çıkarmak
+> Bastığın notanın "vızıldamadan" net çıkması için: parmak ucunu perde telinin (metal çubuğun) hemen ARKASINA koy, tam üstüne değil. Böylece daha az güçle temiz ses çıkar.
+> Penayı başparmakla işaret parmağının yanı arasında tut, sadece ucu çıksın; bilekten küçük hareketlerle çal. Elektro gitarda hafif dokunuş yeter, manyetikler sesi zaten büyütür.
+q: Notanın vızıldamadan çıkması için parmak nereye basmalı? | Perde telinin hemen arkasına | Tam metal perde telinin üstüne | İki perdenin tam ortasına | Fark etmez
+g: playnote s=1 f=1-3 len=3
+g: playnote s=2 f=1-3 len=3
+g: playnote s=6 f=1-3 len=3
 ## u01c | Akort ve gecikme ayarı
 > Akortsuz gitarla yapılan pratik kulağını bozar. Uygulamanın akort aleti mikrofonla teli dinler; ibre ortadaysa tel doğrudur. Burguyu çevirirken teli sürekli çal ve yavaşça yaklaş; hedefi geçtiysen biraz gevşet, aşağıdan yukarı tekrar gel.
 > ---
@@ -49,7 +47,7 @@ g: seq bpm=60 tab="6:0/q 6:0/q 6:0/q 6:0/q 5:0/q 5:0/q 5:0/q 5:0/q" title="Açı
 > Alfabe B'den sonra yeniden C'ye döner; bu yeni C bir OKTAV yukarıdadır. Oktavdaki iki nota "aynı" duyulur, biri daha incedir.
 q: Solfejde "La" hangi harfle gösterilir? | A | L | E | G
 q: B notasından sonra hangi nota gelir? | C | H | A | D
-q: Oktav nedir? | Aynı ismin bir üst/alt tekrarı | İki komşu nota | Beş notalık aralık | Akorun adı
+q: Oktav nedir? | Aynı notanın daha ince ya da daha kalın hâli (12 perde uzağı) | Yan yana iki nota | Beş nota uzaklık | Bir akorun adı
 g: alpha n=6
 ## u02b | Yarım ses, tam ses, diyez ve bemol
 > Gitarda bir perde = bir YARIM SES. İki perde = bir TAM SES. Oktav 12 yarım sestir.
@@ -82,7 +80,7 @@ q: 6. telin 5. perdesi hangi açık telle aynı sestir? | 5. tel (A) | 4. tel (D
 g: fretname s=4,3 f=0-5 n=4
 g: fretfind s=4,3 f=0-5 n=3
 g: playnote s=4,3 f=0-5 len=4 show=name
-q: Hangi telin 4. perdesi bir sonraki telin açık sesidir? | 3. tel (G) | 6. tel | 4. tel | 5. tel
+q: Bir alttaki ince telin açık sesini bulmak için hangi telde 5. değil 4. perdeye basarsın? | 3. tel (G) | 6. tel (E) | 4. tel (D) | 5. tel (A)
 ## u02f | 2. ve 1. teller
 > 2. tel B: 1. perde C, 3. perde D, 5. perde E. 1. tel E: 6. tel ile aynı notalar, iki oktav yukarıda: 1 F, 3 G, 5 A.
 > Artık ilk 5 perdedeki tüm notaları biliyorsun. Bu bölgeye "açık pozisyon" (birinci pozisyon) denir.
@@ -98,7 +96,7 @@ g: playnote s=1-6 f=0-3 len=5
 > Soldan sağa okunur. Üst üste duran sayılar aynı anda çalınır (akor). Basit tab'lar ritim göstermez; bu uygulamada notaların altındaki uzunluklar ritmi gösterir.
 q: Tab'da en üstteki çizgi hangi teldir? | 1. tel (ince E) | 6. tel (kalın E) | 3. tel | Fark etmez
 q: Tab'da "0" ne demektir? | Açık tel | Susturulmuş tel | 10. perde | Sus
-q: Üst üste yazılmış sayılar ne anlama gelir? | Aynı anda çal | Sırayla çal | Bunları atla | Tekrar et
+q: Tab'da aynı dikey hizada üst üste yazılmış sayılar ne demektir? | Hepsini aynı anda çal (akor) | Yukarıdan aşağı sırayla çal | Bunları atla | İki kez çal
 g: fretname view=tab s=1-6 f=0-5 n=4
 ## u03b | Tek telde zamanında çalmak
 > Şimdi gerçek zamanlama: metronom bir ölçü sayar, sonra her notayı vuruşun üstünde çalarsın. Yanlış nota ya da zamansız nota = görev biter.
@@ -193,7 +191,7 @@ g: changes ch=G,D,C,G bpm=70 beats=2 rep=2
 > ÖNEMLİ: Gitar, yazıldığından bir oktav PES duyulur. Portedeki 3. aralık C, gitarda 2. telin 1. perdesidir.
 q: Sol anahtarında alttan 1. çizgi hangi notadır? | E (Mi) | F (Fa) | G (Sol) | C (Do)
 q: Sol anahtarında aralıklar (alttan) hangi notaları verir? | F A C E | E G B D | G B D F | C E G B
-q: Gitar müziği nasıl duyulur? | Yazıldığından bir oktav pes | Yazıldığı gibi | Bir oktav tiz | İki oktav pes
+q: Gitar notası portede yazıldığı yere göre nasıl duyulur? | Bir oktav daha kalın (pes) | Tam yazıldığı gibi | Bir oktav daha ince (tiz) | İki oktav daha kalın
 g: staffname lo=64 hi=77 n=6
 ## u06b | Ek çizgiler
 > Portenin altına ve üstüne ek çizgiler eklenir. Alttaki 1. ek çizgi C (Do) — gitarda 5. telin 3. perdesi. Daha aşağısı: B, A (2 ek çizgi), G, F, E (3 ek çizgi = gitarın en pes notası, açık 6. tel).
@@ -208,7 +206,7 @@ g: staffplay lo=52 hi=77 len=3 n=2
 > DONANIM: anahtarın yanındaki diyez/bemoller tüm parça boyunca geçerlidir. Örneğin G majörün donanımında F# vardır: yazılan her F, F# çalınır.
 > GEÇİCİ işaretler (notanın önündeki #, b, ♮ natürel) sadece o ölçünün sonuna kadar geçerlidir. Natürel işareti donanımı iptal eder.
 q: Natürel (♮) işareti ne yapar? | Diyez/bemolü iptal eder | Yarım ses tizleştirir | Notayı uzatır | Susturur
-q: Geçici işaret ne zamana kadar geçerlidir? | Ölçü sonuna kadar | Parça sonuna kadar | Sadece o notaya | Bir sonraki ölçünün sonuna
+q: Bir notanın önüne konan diyez/bemol (geçici işaret) ne zamana kadar geçerlidir? | O ölçünün sonuna kadar | Parçanın sonuna kadar | Sadece o tek notaya | Bir sonraki ölçünün sonuna kadar
 g: staffname lo=52 hi=77 acc=1 n=4
 
 # u07 | Power Chord ve Palm Mute | Rock ve grunge'ın temeli
@@ -216,7 +214,7 @@ g: staffname lo=52 hi=77 acc=1 n=4
 > POWER CHORD sadece kök ve beşliden oluşur (üçlü yok), bu yüzden ne majör ne minördür: "5" ile yazılır (E5, G5). Distorsiyonla çok temiz ve güçlü duyulur — Nirvana ve Guns N' Roses'ın temel aracıdır.
 > 6. tel köklü şekil: kök 6. telde (işaret parmağı), beşli 5. telde iki perde ileride (yüzük parmağı). İstersen oktavı 4. tele aynı perdeye ekle (serçe).
 q: Power chord hangi notalardan oluşur? | Kök ve beşli | Kök ve üçlü | Kök, üçlü, beşli | Kök ve yedili
-q: G5 akorunun notaları? | G ve D | G ve B | G, B, D | G ve C
+q: G5 (G power chord) hangi notalardan oluşur? | G ve D | G ve B | G, B ve D | G ve C
 g: chord name=E5,A5 n=1
 g: chord name=G5@6
 g: chord name=A5@6,F5@6,C5@6 n=2
@@ -253,12 +251,12 @@ g: ival set=m2,M2,m3,M3 n=5
 > TAM DÖRTLÜ = 5 yarım ses (C–F), TAM BEŞLİ = 7 (C–G), TRİTON = 6 (C–F#). Tam aralıklar "boş/sağlam", triton ise çok gergindir (dominant akorun gerilimi buradan gelir).
 > Gitar teli: komşu teller arası tam dörtlüdür (G–B hariç: büyük üçlü). Power chord = kök + tam beşli.
 q: Tam beşli kaç yarım sestir? | 7 | 5 | 6 | 8
-q: Komşu iki tel (G–B hariç) arası hangi aralıktır? | Tam dörtlü | Tam beşli | Büyük üçlü | Oktav
+q: Açık çalınan iki komşu tel arasındaki aralık nedir? (G ve B telleri hariç) | Tam dörtlü (5 perde) | Tam beşli (7 perde) | Büyük üçlü (4 perde) | Oktav (12 perde)
 g: ival set=P4,TT,P5,M3,m3 n=5
 ## u08c | Altılı, yedili, oktav
 > KÜÇÜK ALTILI 8, BÜYÜK ALTILI 9, KÜÇÜK YEDİLİ 10, BÜYÜK YEDİLİ 11, OKTAV 12 yarım ses.
 > Kısayol (ters çevirme): bir aralık ile tersi toplamı 9'dur ve nitelik değişir: büyük↔küçük, tam↔tam. C–A büyük altılı, A–C küçük üçlü.
-q: Büyük altılının tersi nedir? | Küçük üçlü | Büyük üçlü | Küçük altılı | Tam dörtlü
+q: Büyük altılı aralığı ters çevirince (alttaki notayı bir oktav yukarı taşıyınca) hangi aralık olur? | Küçük üçlü | Büyük üçlü | Küçük altılı | Tam dörtlü
 q: Küçük yedili kaç yarım sestir? | 10 | 11 | 9 | 8
 g: ival set=m6,M6,m7,M7,P8,P5 n=5
 ## u08d | Aralık kulağı
@@ -294,7 +292,7 @@ g: scale key=G type=major pos=2 bpm=70 dur=e
 > Her notanın gamda bir derece numarası ve adı vardır: 1 Tonik (yuva), 2 Süpertonik, 3 Medyant, 4 Subdominant, 5 Dominant (en güçlü çekim), 6 Submedyant, 7 Yeden (tonik'e yarım ses çeker).
 > Melodiler 7'den 1'e, 4'ten 3'e çözülmeyi sever. Bu "gerilim → çözülme" bütün tonal müziğin motorudur.
 g: degree keys=C,G,D,F n=6
-q: Yeden notası tonik'e kaç yarım ses uzaktır? | 1 | 2 | 3 | 5
+q: Majör gamın 7. notası (yeden), üstündeki tonik notasına kaç yarım ses uzaktır? | 1 | 2 | 3 | 5
 
 # u10 | Akor Yapısı ve Tonalite | Üçlüler, diyatonik akorlar, dizgeler
 ## u10a | Dört tür üçlü akor
@@ -370,8 +368,8 @@ g: seq bpm=60 bar=3 tab="5:3/q 4:2/q 3:0/q 5:3/q 4:2/q 3:0/q"
 ## u12a | Minör pentatonik, 1. kutu
 > PENTATONİK 5 notalı gamdır. Minör pentatonik: 1 – b3 – 4 – 5 – b7. A minör pentatonik: A C D E G.
 > 1. kutu (A için 5. perde): her telde iki nota. Rock, blues ve grunge sololarının çoğu bu kutudan çıkar. Kökler 6. tel 5. perde, 4. tel 7. perde ve 1. tel 5. perdededir.
-q: Minör pentatonik formülü nedir? | 1 b3 4 5 b7 | 1 2 3 5 6 | 1 b3 5 b7 | 1 2 b3 4 5
-q: A minör pentatonik notaları? | A C D E G | A B C D E | A C E G | A D E G B
+q: Minör pentatonik gamın derece formülü nedir? | 1 b3 4 5 b7 | 1 2 3 5 6 | 1 b3 5 b7 | 1 2 b3 4 5
+q: A minör pentatonik gamın notaları hangileri? | A C D E G | A B C D E | A C E G | A D E G B
 g: scale key=A type=minpent pos=5 bpm=60 dur=q dir=up
 g: scale key=A type=minpent pos=5 bpm=60 dur=q
 g: scale key=A type=minpent pos=5 bpm=70 dur=e
@@ -379,7 +377,7 @@ g: scale key=E type=minpent pos=12 bpm=60 dur=q
 ## u12b | Blues gamı
 > Minör pentatoniğe b5 (blue note) eklersen BLUES GAMI olur: 1 b3 4 b5 5 b7. A blues: A C D Eb E G. b5 geçiş notasıdır; üzerinde uzun durma, kaydır.
 > Cream'in Sunshine of Your Love riffi gibi pek çok klasik riff bu gamdan doğar.
-q: Blues gamını pentatonikten ayıran nota? | b5 | b2 | 6 | 7
+q: Blues gamını minör pentatonikten ayıran ek nota hangisi? | b5 (blue note) | b2 | 6 | 7
 g: scale key=A type=blues pos=5 bpm=60 dur=q
 g: scale key=E type=blues pos=0 bpm=60 dur=q
 g: scalespell keys=A,E,D,G types=minpent,blues n=3
@@ -484,14 +482,14 @@ g: seq bpm=60 tab="6:3/e 2:0/e 4:0/e 1:3/e 6:3/e 2:0/e 4:0/e 3:0/e" rep=2 title=
 > 7 (dominant) = 1 3 5 b7 (gergin, çözülmek ister; blues'un sesi) — C7: C E G Bb
 > m7 = 1 b3 5 b7 (yumuşak minör) — Cm7: C Eb G Bb
 q: Dominant 7 akorunun formülü nedir? | 1 3 5 b7 | 1 3 5 7 | 1 b3 5 b7 | 1 b3 b5 b7
-q: Cmaj7 ile C7'yi ayıran nota? | B ↔ Bb | E ↔ Eb | G ↔ Gb | C ↔ C#
+q: Cmaj7 ile C7 akorları arasındaki tek fark hangi notadır? | B ↔ Bb | E ↔ Eb | G ↔ Gb | C ↔ C#
 g: chordspell types=maj7,7,m7 roots=C,D,E,F,G,A n=4
 g: chordear types=maj7,7,m7 n=4
 g: chord name=Cmaj7,Am7,E7,D7,G7,A7 n=3
 ## u16b | m7b5, dim7, aug
 > m7b5 (yarım eksik, ø) = 1 b3 b5 b7: majörde vii akoru, minörde ii akoru. dim7 = 1 b3 b5 bb7 (6): simetrik, her 3 perdede kendini tekrarlar. aug: 1 3 #5, her 4 perdede tekrarlar.
-q: dim7 akoru kaç perdede bir tekrar eder? | 3 | 4 | 2 | 6
-q: Majör gamın vii akoru dörtlü olarak hangi türdür? | m7b5 | dim7 | m7 | 7
+q: dim7 akor şekli sapta kaç perdede bir aynı akoru verir? | 3 | 4 | 2 | 6
+q: Majör gamın 7. derecesine kurulan dörtlü (7'li) akor hangi türdür? | m7b5 | dim7 | m7 | 7
 g: chordspell types=m7b5,dim7,7,m7 roots=B,C,D,E,F#,G n=3
 g: chord name=Bm7b5@5,Cdim7@5,Em7b5@5 n=2
 ## u16c | sus, add9 ve 6'lılar
@@ -511,7 +509,7 @@ g: changes ch=Am,Am/G,D/F#,F bpm=60 beats=4 rep=1
 ## u16e | Genişlemeler: 9, 11, 13
 > 7'li akorun üstüne üçlü eklemeye devam: 9 (=2), 11 (=4), 13 (=6). Gitarda tüm notalar çalınamaz; genelde 5'li, bazen kök atılır. C9 = C E G Bb D. C13'te genelde 11 atılır.
 > 7#9 (E7#9): hem büyük hem küçük üçlü — "Hendrix akoru", rock'ın en kirli dominanti.
-q: 13 hangi notaya eşittir (oktav farkı ile)? | 6 | 3 | 4 | 7
+q: Akor adındaki "13", gamın hangi derecesiyle aynı notadır (bir oktav yukarıda)? | 6 | 3 | 4 | 7
 q: Dominant 9 akorunun formülü nedir? | 1 3 5 b7 9 | 1 3 5 7 9 | 1 b3 5 b7 9 | 1 3 5 9
 g: chordspell types=9,maj9,m9,13 roots=C,D,G,A n=3
 g: chord name=C9@5,E7#9@5,A13@5 n=2
@@ -520,8 +518,8 @@ g: chord name=C9@5,E7#9@5,A13@5 n=2
 ## u17a | Beşliler çemberi
 > C'den başlayıp beşli yukarı giderek (C G D A E B F# C#) her adımda bir diyez eklenir. Dörtlü yukarı (F Bb Eb Ab Db Gb Cb) her adımda bir bemol.
 > Diyezlerin sırası: F C G D A E B. Bemollerin sırası tersidir: B E A D G C F. Diyezli tonlarda son diyezin yarım ses üstü tonun adıdır (F#, C# → D majör).
-q: Diyezlerin donanıma eklenme sırası? | F C G D A E B | B E A D G C F | C G D A E B F | F G A B C D E
-q: Donanımda F#, C#, G#, D# varsa majör ton? | E | D | A | B
+q: Diyezler donanıma hangi sırayla eklenir? | F C G D A E B | B E A D G C F | C G D A E B F | F G A B C D E
+q: Donanımında F#, C#, G# ve D# olan majör ton hangisi? | E | D | A | B
 g: keysig n=6
 ## u17b | İlgili minör ve paralel minör
 > İLGİLİ (relative) minör, majörle aynı donanımı paylaşır ve 6. dereceden başlar: C majör ↔ A minör, G majör ↔ E minör.
@@ -530,15 +528,15 @@ g: relative n=5
 q: E minörün ilgili majörü? | G | C | D | E
 ## u17c | Kadanslar
 > KADANS, müzik cümlesinin bitişidir. OTANTİK: V → I (tam kapanış). PLAGAL: IV → I ("amin" kadansı). YARIM: ? → V (soru gibi, açık bırakır). ALDATICI: V → vi (beklenen I yerine sürpriz).
-q: V → vi hangi kadanstır? | Aldatıcı | Otantik | Plagal | Yarım
-q: IV → I hangi kadanstır? | Plagal | Otantik | Yarım | Aldatıcı
+q: V akorundan, beklenen I yerine vi akoruna gitmek hangi kadanstır? | Aldatıcı | Otantik | Plagal | Yarım
+q: IV akorundan I akoruna giderek bitirmek hangi kadanstır? | Plagal | Otantik | Yarım | Aldatıcı
 q: Bir cümlenin V akorunda bitmesi hangi kadanstır? | Yarım | Otantik | Plagal | Aldatıcı
 g: progear set=8 n=3
 ## u17d | Modülasyon
 > MODÜLASYON, şarkının ortasında ton değiştirmektir. En yaygınları: yakın tonlara (çemberde komşu), ilgili minöre, ve son nakaratta yarım/tam ses yukarı "anahtar değişikliği" (truck driver modulation).
 > Pivot akor: iki tonda da bulunan bir akor geçişi yumuşatır (C majör ve G majörde Am ortaktır).
 q: C majör ile G majörün ortak akorları hangileri? | C, Em, G, Am | C, F, G | Dm, F, B° | Hepsi ortak
-q: Çemberde C majörün komşu tonları? | G ve F | D ve Bb | A ve Eb | E ve Ab
+q: Beşliler çemberinde C majörün iki yanındaki komşu tonlar hangileri? | G ve F | D ve Bb | A ve Eb | E ve Ab
 
 # u18 | Blues | 12 ölçü, shuffle, majör-minör karışımı
 ## u18a | 12 ölçülük blues
@@ -573,8 +571,8 @@ g: mode n=4
 ## u19b | Doryen ve Miksolidyen
 > DORYEN = doğal minör + majör 6 (1 2 b3 4 5 6 b7). Funk, Santana, rock solo havası. Em – A gibi minör i → majör IV vamp'ı Doryen'i çağırır.
 > MİKSOLİDYEN = majör + b7 (1 2 3 4 5 6 b7). Rock'ın majör tonu: I – bVII – IV (ör. A – G – D) dizisi saf Miksolidyen'dir. Guns N' Roses'ın birçok riffinde bu renk vardır.
-q: Miksolidyeni majörden ayıran nota? | b7 | #4 | b3 | b6
-q: Doryeni doğal minörden ayıran nota? | Majör 6 | b2 | b5 | Majör 3
+q: Miksolidyen modu majör gamdan ayıran nota hangisi? | b7 | #4 | b3 | b6
+q: Doryen modu doğal minörden ayıran nota hangisi? | Majör 6 | b2 | b5 | Majör 3
 g: scale key=E type=dorian pos=0 bpm=60 dur=q
 g: scale key=A type=mixolydian pos=4 bpm=60 dur=q
 g: improv scale=E:dorian bpm=80 beats=24 pos=0
@@ -592,7 +590,7 @@ g: scalespell keys=D,E,G,A types=dorian,mixolydian,lydian,phrygian n=3
 ## u20a | Üç minör
 > DOĞAL minör: 1 2 b3 4 5 b6 b7. ARMONİK minör: 7'yi yükseltir (1 2 b3 4 5 b6 7) — böylece V akoru majör/dominant olur ve güçlü bir çekim doğar. Klasik ve neo-klasik metal sesi.
 > MELODİK minör (caz minörü): 6 ve 7 yükselir (1 2 b3 4 5 6 7).
-q: Armonik minörü doğal minörden ayıran nota? | Yükseltilmiş 7 | Yükseltilmiş 6 | b2 | b5
+q: Armonik minörü doğal minörden ayıran nota hangisi? | Yükseltilmiş 7 | Yükseltilmiş 6 | b2 | b5
 q: A armonik minörde hangi nota diyezlidir? | G# | F# | C# | D#
 g: scalespell keys=A,E,D types=minor,harmmin,melmin n=4
 g: scale key=A type=harmmin pos=5 bpm=60 dur=q
@@ -685,7 +683,7 @@ q: G7 → C geçişinde yeden (B) nereye çözülür? | C | A | D | B
 > Hangi akorda hangi gam? Majör akor (I): İyonyen veya majör pentatonik; IV akor: Lidyen; m7 (ii): Doryen; dominant 7 (V): Miksolidyen (veya blues); m7b5: Lokriyen; vi minör: Aiolyan. Altered dominantlarda (7b9, 7#9): azalmış veya alt (melodik minörün 7. modu) gam.
 > Ama altın kural: önce AKOR TONLARINI hedefle; gamlar akor tonları arasındaki geçişlerdir.
 q: ii–V–I'de ii akorunda hangi mod doğaldır? | Doryen | Lidyen | Frigyen | Lokriyen
-q: Dominant 7 akoru için temel mod? | Miksolidyen | İyonyen | Aiolyan | Doryen
+q: Dominant 7 akorunun üzerinde çalınan temel mod hangisi? | Miksolidyen | İyonyen | Aiolyan | Doryen
 q: IV akoru üzerinde (majör tonda) hangi mod oluşur? | Lidyen | Miksolidyen | Doryen | İyonyen
 
 # u24 | İleri Kulak Eğitimi | Kulaktan çalma ve transkripsiyon
@@ -704,7 +702,7 @@ g: progear set=8 n=4
 g: ivalear set=m2,M2,m3,M3,P4,TT,P5,m6,M6,m7,M7,P8 mode=mix dir=both n=5
 ## u24d | Transkripsiyon yöntemi
 > 1) Kısa bir bölümü (2-4 saniye) döngüye al. 2) Yavaşlat (pek çok oynatıcı tonu bozmadan yavaşlatır). 3) Önce ritmi, sonra notaları bul. 4) Kulaktan bulduğunu tab'a yaz. 5) Bu uygulamanın Şarkılar bölümüne yapıştırıp kayıtla birlikte çalıştır.
-q: Transkripsiyonda çoğunlukla en önce bulunması önerilen şey? | Bas notası / ritim | Solo | En tiz nota | Akorların adı
+q: Bir şarkıyı kulaktan çıkarırken genelde ilk neyi bulmak önerilir? | Bas notası / ritim | Solo | En tiz nota | Akorların adı
 
 # u25 | Akort, Ton ve İfade | Alternatif akortlar, sound, dinamik
 ## u25a | Alternatif akortlar

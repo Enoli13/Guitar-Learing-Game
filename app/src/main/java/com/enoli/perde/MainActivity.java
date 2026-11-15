@@ -150,9 +150,12 @@ public class MainActivity extends Activity {
         final View[] currentNode = {null};
         for (Curriculum.Unit u : cur.units) {
             int color = Ui.UNIT_COLORS[u.index % Ui.UNIT_COLORS.length];
+            LinearLayout bannerRow = Ui.hbox(this);
+            bannerRow.setBackground(Ui.rounded(color, Ui.dp(this, 18)));
+            bannerRow.setPadding(p, p, p / 2, p);
             LinearLayout banner = Ui.vbox(this);
-            banner.setBackground(Ui.rounded(color, Ui.dp(this, 18)));
-            banner.setPadding(p, p, p, p);
+            bannerRow.addView(banner, new LinearLayout.LayoutParams(0, Ui.WRAP, 1));
+            bannerRow.addView(new Art.UnitObject(this, u.index), new LinearLayout.LayoutParams(Ui.dp(this, 70), Ui.dp(this, 70)));
             banner.addView(Ui.text(this, "ÜNİTE " + (u.index + 1), 13, 0xCCFFFFFF, true));
             banner.addView(Ui.text(this, u.title, 20, 0xFFFFFFFF, true));
             banner.addView(Ui.text(this, u.subtitle, 14, 0xE6FFFFFF, false));
@@ -165,7 +168,7 @@ public class MainActivity extends Activity {
                         .setPositiveButton("Başla", (d, w) -> LessonActivity.start(this, "test", u.id)).setNegativeButton("Vazgeç", null).show());
                 banner.addView(skip);
             } else banner.addView(Ui.text(this, "✓ Tamamlandı", 13, 0xFFFFFFFF, true));
-            col.addView(banner, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 18, 12));
+            col.addView(bannerRow, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 18, 12));
             for (Curriculum.Lesson l : u.lessons) {
                 Views.Node n = new Views.Node(this);
                 n.color = color;
@@ -187,7 +190,17 @@ public class MainActivity extends Activity {
                 tl.leftMargin = flp.leftMargin;
                 tl.topMargin = Ui.dp(this, 80);
                 if (n.stars <= 0) row.addView(t, tl);
-                if (n.current) currentNode[0] = row;
+                if (n.current) {
+                    currentNode[0] = row;
+                    // maskot, sıradaki dersin yanında bekler
+                    Art.Mascot mm = new Art.Mascot(this);
+                    mm.setMood(Art.Mascot.Mood.IDLE);
+                    FrameLayout.LayoutParams ml = new FrameLayout.LayoutParams(Ui.dp(this, 70), Ui.dp(this, 70), Gravity.CENTER_HORIZONTAL);
+                    ml.leftMargin = flp.leftMargin + (flp.leftMargin > 0 ? -Ui.dp(this, 110) : Ui.dp(this, 110));
+                    ml.topMargin = Ui.dp(this, 6);
+                    row.addView(mm, ml);
+                    mm.setOnClickListener(v -> { mm.pop(); lessonSheet(l, un); });
+                }
             }
         }
         if (currentNode[0] != null) sv.post(() -> sv.scrollTo(0, Math.max(0, currentNode[0].getTop() - Ui.dp(this, 200))));

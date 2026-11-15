@@ -205,13 +205,21 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
     private void showFeedback(boolean pass, String message, boolean terminal) {
         feedback.removeAllViews();
         feedback.setBackground(Ui.rounded(pass ? 0xFF1E3311 : 0xFF3A1717, Ui.dp(this, 22)));
-        String head = pass ? pickPraise() : "Olmadı";
-        TextView h = Ui.text(this, (pass ? "✓ " : "✗ ") + head, 22, pass ? Ui.GREEN : Ui.RED, true);
-        feedback.addView(h);
+        String head = pass ? pickPraise() : pickComfort();
+        LinearLayout top = Ui.hbox(this);
+        Art.Mascot mm = new Art.Mascot(this);
+        mm.setMood(pass ? Art.Mascot.Mood.HAPPY : Art.Mascot.Mood.SAD);
+        top.addView(mm, new LinearLayout.LayoutParams(Ui.dp(this, 64), Ui.dp(this, 64)));
+        LinearLayout txt = Ui.vbox(this);
+        txt.setPadding(Ui.dp(this, 10), 0, 0, 0);
+        TextView h = Ui.text(this, head, 22, pass ? Ui.GREEN : Ui.RED, true);
+        txt.addView(h);
         if (message != null && !message.isEmpty()) {
             TextView m = Ui.text(this, message, 15, Ui.TEXT, false);
-            feedback.addView(m, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 6, 0));
+            txt.addView(m, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 4, 0));
         }
+        top.addView(txt, new LinearLayout.LayoutParams(0, Ui.WRAP, 1));
+        feedback.addView(top);
         LinearLayout row = Ui.hbox(this);
         if (!pass && !terminal && isMic(current.type)) {
             Button retry = Ui.button(this, "Tekrar dene", Ui.BLUE, Ui.BLUE_D);
@@ -224,11 +232,17 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         row.addView(cont, Ui.weight(1));
         feedback.addView(row, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 14, 0));
         feedback.setVisibility(View.VISIBLE);
+        Ui.slideUp(feedback);
         if (pass) Sfx.good(); else Sfx.bad();
     }
 
     private String pickPraise() {
         String[] s = {"Harika!", "Süper!", "Tam isabet!", "Mükemmel!", "Böyle devam!", "Rock'n'roll!", "Temiz!"};
+        return s[new Random().nextInt(s.length)];
+    }
+
+    private String pickComfort() {
+        String[] s = {"Olmadı, ama yaklaştın!", "Tekrar deneyelim!", "Hata = öğrenme!", "Bir dahakine!"};
         return s[new Random().nextInt(s.length)];
     }
 
@@ -307,9 +321,13 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         root.addView(sv);
         confetti = new Views.Confetti(this);
         root.addView(confetti, new FrameLayout.LayoutParams(Ui.MATCH, Ui.MATCH));
+        Art.Mascot hero = new Art.Mascot(this);
+        hero.setMood(Art.Mascot.Mood.CHEER);
+        col.addView(hero, new LinearLayout.LayoutParams(Ui.dp(this, 150), Ui.dp(this, 150)));
         TextView t = Ui.text(this, title, 30, Ui.YELLOW, true);
         t.setGravity(Gravity.CENTER);
         col.addView(t);
+        Ui.pop(t);
         if (!"review".equals(mode)) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 3; i++) sb.append(i < stars ? "★" : "☆");
@@ -319,7 +337,9 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         }
         LinearLayout stats = Ui.hbox(this);
         stats.setGravity(Gravity.CENTER);
-        stats.addView(statBox("XP", "+" + xp, Ui.YELLOW), statLp());
+        LinearLayout xpBox = statBox("XP", "+0", Ui.YELLOW);
+        stats.addView(xpBox, statLp());
+        Ui.countUp((TextView) xpBox.getChildAt(1), "+", xp, "");
         stats.addView(statBox("Seri", "🔥 " + prog.streak, Ui.ORANGE), statLp());
         int acc = total == 0 ? 100 : Math.round(100f * Math.max(0, total - mistakes) / total);
         stats.addView(statBox("Doğruluk", "%" + Math.max(0, acc), Ui.GREEN), statLp());
@@ -337,16 +357,20 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         }
         prog.newlyUnlocked.clear();
         // değişken ödül: sandık
-        Button chest = Ui.button(this, "🎁  Sandığı aç", Ui.ORANGE, Ui.darker(Ui.ORANGE, 0.75f));
-        TextView reward = Ui.text(this, "", 18, Ui.TEXT, true);
+        Art.Chest chest = new Art.Chest(this);
+        TextView reward = Ui.text(this, "🎁 Sandığa dokun!", 18, Ui.ORANGE, true);
         reward.setGravity(Gravity.CENTER);
         chest.setOnClickListener(v -> {
-            chest.setEnabled(false); chest.setAlpha(0.5f);
+            if (chest.isOpen()) return;
+            chest.openNow();
             reward.setText(openChest());
+            reward.setTextColor(Ui.TEXT);
+            Ui.pop(reward);
             confetti.burst();
+            hero.pop();
             Sfx.chest();
         });
-        col.addView(chest, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 26, 6));
+        col.addView(chest, new LinearLayout.LayoutParams(Ui.MATCH, Ui.dp(this, 130)));
         col.addView(reward, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 4, 6));
         TextView goal = Ui.text(this, "Günlük hedef: " + Math.min(prog.todayXp, prog.dailyGoal) + " / " + prog.dailyGoal + " XP" + (prog.todayXp >= prog.dailyGoal ? "  ✓" : ""), 15, Ui.MUTED, false);
         goal.setGravity(Gravity.CENTER);

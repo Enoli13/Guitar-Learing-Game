@@ -40,6 +40,7 @@ public class ExerciseView extends LinearLayout {
     private Views.Meter meter;
     private Button startBtn;
     private float bpmBonus;
+    private Art.Mascot mascot;
     private final Progress prog;
 
     public ExerciseView(Context c) {
@@ -56,9 +57,12 @@ public class ExerciseView extends LinearLayout {
         removeAllViews();
         finished = false; running = false;
         if (e.title != null && !e.title.isEmpty() && e.type != Ex.Type.INFO) addView(Ui.text(ctx, e.title, 14, Ui.MUTED, true));
+        mascot = new Art.Mascot(ctx);
         if (e.type != Ex.Type.INFO) {
-            TextView pr = Ui.text(ctx, e.prompt, 20, Ui.TEXT, true);
-            addView(pr, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 4, 12));
+            mascot.setMood(LessonActivity.isMic(e.type) ? Art.Mascot.Mood.IDLE : Art.Mascot.Mood.THINK);
+            LinearLayout row = Art.speech(ctx, mascot, e.prompt, 84, 18);
+            addView(row, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 4, 12));
+            Ui.slideUp(row);
         }
         switch (e.type) {
             case INFO: buildInfo(); break;
@@ -88,6 +92,7 @@ public class ExerciseView extends LinearLayout {
         if (finished) return;
         finished = true;
         stop();
+        if (mascot != null && ex.type != Ex.Type.INFO) mascot.setMood(pass ? Art.Mascot.Mood.HAPPY : Art.Mascot.Mood.SAD);
         if (status != null) {
             status.setText(pass ? "✓ " + (msg == null ? "Harika!" : msg) : "✗ " + msg);
             status.setTextColor(pass ? Ui.GREEN : Ui.RED);
@@ -205,6 +210,7 @@ public class ExerciseView extends LinearLayout {
                 public void onNote(long n, float m, boolean a) { h.post(() -> { if (!finished) l.onNote(n, m, a); }); }
                 public void onOnset(long n, float db) { h.post(() -> { if (!finished) l.onOnset(n, db); }); }
             });
+            if (mascot != null) mascot.setMood(Art.Mascot.Mood.LISTEN);
             if (!in.isRunning()) {
                 if (!in.start()) { status.setText("Mikrofon açılamadı"); status.setTextColor(Ui.RED); }
             }
@@ -215,11 +221,14 @@ public class ExerciseView extends LinearLayout {
 
     // ------------------------------------------------------------------ INFO
     private void buildInfo() {
+        mascot.setMood(Art.Mascot.Mood.TEACH);
+        LinearLayout head = Art.speech(ctx, mascot, ex.title == null || ex.title.isEmpty() ? "Yeni bilgi!" : ex.title, 96, 20);
+        addView(head, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 0, 12));
         LinearLayout card = Ui.card(ctx);
-        if (ex.title != null && !ex.title.isEmpty()) card.addView(Ui.text(ctx, ex.title, 22, Ui.TEXT, true), Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 0, 10));
         TextView t = Ui.text(ctx, ex.body, 17, Ui.TEXT, false);
         card.addView(t);
         addView(card);
+        Ui.slideUp(card);
         Button b = Ui.primary(ctx, "Anladım");
         b.setOnClickListener(v -> done(true, null));
         addView(b, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 18, 0));
@@ -232,10 +241,12 @@ public class ExerciseView extends LinearLayout {
         for (int i = 0; i < ex.options.size(); i++) {
             final int idx = i;
             Button b = Ui.option(ctx, ex.options.get(i));
+            Ui.pressable(b);
             b.setOnClickListener(v -> {
                 if (finished) return;
                 boolean ok = idx == ex.correct;
                 v.setBackground(Ui.outlined(ok ? 0xFF1F3A12 : 0xFF3A1414, ok ? Ui.GREEN : Ui.RED, dp(2), dp(14)));
+                if (ok) Ui.pop(v); else Ui.shake(v);
                 if (!ok) {
                     View cv = getChildAt(indexOfChild(v) - idx + ex.correct);
                     if (cv != null) cv.setBackground(Ui.outlined(0xFF1F3A12, Ui.GREEN, dp(2), dp(14)));
@@ -255,6 +266,7 @@ public class ExerciseView extends LinearLayout {
             int pc = Theory.pc(Theory.OPEN[s] + f);
             boolean ok = (ex.tapString == 0 || s == ex.tapString) && pc == ex.tapPc;
             fret.addDot(s, f, ok ? Ui.GREEN : Ui.RED, Theory.SHARP[pc]);
+            if (ok) Ui.pop(fret); else Ui.shake(fret);
             if (!ok) {
                 for (int ff = 0; ff <= ex.fretTo; ff++) if (Theory.pc(Theory.OPEN[ex.tapString] + ff) == ex.tapPc) fret.addDot(ex.tapString, ff, Ui.GREEN, Theory.SHARP[ex.tapPc]);
             }
@@ -286,6 +298,7 @@ public class ExerciseView extends LinearLayout {
                 Ex.Note exp = ex.notes.get(next);
                 if (matchesNote(exp, m, ex.strictOctave)) {
                     markWait(next, 1);
+                    mascot.pop();
                     lastHitMidi = m; lastHitT = t;
                     next++;
                     if (next >= ex.notes.size()) { done(true, null); return; }

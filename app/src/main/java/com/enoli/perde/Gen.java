@@ -173,8 +173,8 @@ public final class Gen {
         int t = r.nextInt(3), i = r.nextInt(7);
         List<String> letters = new ArrayList<>(); Collections.addAll(letters, Theory.LETTERS);
         List<String> solf = new ArrayList<>(); Collections.addAll(solf, Theory.SOLFEJ);
-        if (t == 0) return choice(Theory.LETTERS[i] + " notasından sonra gelen doğal nota hangisi?", Theory.LETTERS[(i + 1) % 7], letters, r);
-        if (t == 1) return choice(Theory.LETTERS[i] + " notasından önce gelen doğal nota hangisi?", Theory.LETTERS[(i + 6) % 7], letters, r);
+        if (t == 0) return choice(Theory.LETTERS[i] + " notasından sonra gelen doğal nota (diyezsiz/bemolsüz) hangisi?", Theory.LETTERS[(i + 1) % 7], letters, r);
+        if (t == 1) return choice(Theory.LETTERS[i] + " notasından önce gelen doğal nota (diyezsiz/bemolsüz) hangisi?", Theory.LETTERS[(i + 6) % 7], letters, r);
         if (r.nextBoolean()) return choice("\"" + Theory.SOLFEJ[i] + "\" hangi harfle yazılır?", Theory.LETTERS[i], letters, r);
         return choice(Theory.LETTERS[i] + " harfinin solfej adı nedir?", Theory.SOLFEJ[i], solf, r);
     }
@@ -185,7 +185,7 @@ public final class Gen {
         int d = 1 + r.nextInt(max);
         boolean down = p.containsKey("down") && r.nextBoolean();
         int ans = Theory.pc(root + (down ? -d : d));
-        return choice(Theory.SHARP[root] + " notasının " + d + " yarım ses " + (down ? "aşağısı" : "yukarısı") + " hangi nota?",
+        return choice(Theory.SHARP[root] + " notasının " + d + " yarım ses (" + d + " perde) " + (down ? "aşağısı" : "yukarısı") + " hangi nota?",
                 pcLabel(ans), allPcLabels(), r);
     }
 

@@ -67,7 +67,45 @@ public final class Ui {
         b.setBackground(new RippleDrawable(ColorStateList.valueOf(0x33FFFFFF), ld, null));
         b.setPadding(dp(c, 16), dp(c, 12), dp(c, 16), dp(c, 16));
         b.setStateListAnimator(null);
+        pressable(b);
         return b;
+    }
+
+    /** Dokununca hafifçe içeri basılan buton hissi. */
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    public static void pressable(View v) {
+        v.setOnTouchListener((view, e) -> {
+            if (e.getAction() == android.view.MotionEvent.ACTION_DOWN) view.animate().scaleX(0.95f).scaleY(0.95f).setDuration(70).start();
+            else if (e.getAction() == android.view.MotionEvent.ACTION_UP || e.getAction() == android.view.MotionEvent.ACTION_CANCEL)
+                view.animate().scaleX(1f).scaleY(1f).setDuration(160).setInterpolator(new android.view.animation.OvershootInterpolator(3f)).start();
+            return false;
+        });
+    }
+
+    /** Doğru cevapta büyüyüp yerine oturma. */
+    public static void pop(View v) {
+        v.setScaleX(0.85f); v.setScaleY(0.85f);
+        v.animate().scaleX(1f).scaleY(1f).setDuration(380).setInterpolator(new android.view.animation.OvershootInterpolator(4f)).start();
+    }
+
+    /** Yanlış cevapta sağa sola titreme. */
+    public static void shake(View v) {
+        android.animation.ObjectAnimator a = android.animation.ObjectAnimator.ofFloat(v, "translationX", 0, -24, 24, -16, 16, -8, 8, 0);
+        a.setDuration(420); a.start();
+    }
+
+    /** Aşağıdan kayarak gelme. */
+    public static void slideUp(View v) {
+        v.setTranslationY(dp(v.getContext(), 120)); v.setAlpha(0f);
+        v.animate().translationY(0).alpha(1f).setDuration(260).setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
+    }
+
+    /** Sayı sayarak artan metin (XP gibi). */
+    public static void countUp(TextView t, String prefix, int to, String suffix) {
+        android.animation.ValueAnimator a = android.animation.ValueAnimator.ofInt(0, to);
+        a.setDuration(900);
+        a.addUpdateListener(an -> t.setText(prefix + an.getAnimatedValue() + suffix));
+        a.start();
     }
 
     public static Button primary(Context c, String label) { return button(c, label, GREEN, GREEN_D); }
@@ -83,6 +121,7 @@ public final class Ui {
         b.setBackground(outlined(SURFACE, LINE, dp(c, 2), dp(c, 14)));
         b.setPadding(dp(c, 12), dp(c, 14), dp(c, 12), dp(c, 14));
         b.setStateListAnimator(null);
+        pressable(b);
         return b;
     }
 
