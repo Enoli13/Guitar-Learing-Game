@@ -1,0 +1,114 @@
+package com.enoli.perde;
+
+import android.content.Context;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/** assets/curriculum.txt ve songs.txt dosyalarını okur. */
+public class Curriculum {
+    public static class Unit {
+        public String id, title, subtitle;
+        public List<Lesson> lessons = new ArrayList<>();
+        public int index;
+    }
+
+    public static class Lesson {
+        public String id, title;
+        public Unit unit;
+        public List<String> cards = new ArrayList<>();
+        public List<String> specs = new ArrayList<>();
+        public int globalIndex;
+    }
+
+    public static class Song {
+        public String title, artist, skills, tip;
+        public String[] prereqs;
+        public int difficulty;
+        public String id() { return (title + "|" + artist).toLowerCase().replaceAll("[^a-z0-9]", ""); }
+    }
+
+    public final List<Unit> units = new ArrayList<>();
+    public final List<Lesson> lessons = new ArrayList<>();
+    public final Map<String, Lesson> byId = new HashMap<>();
+    public final List<Song> songs = new ArrayList<>();
+
+    private static Curriculum instance;
+
+    public static synchronized Curriculum get(Context c) {
+        if (instance == null) {
+            instance = new Curriculum();
+            instance.load(c);
+        }
+        return instance;
+    }
+
+    private void load(Context c) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(c.getAssets().open("curriculum.txt"), StandardCharsets.UTF_8))) {
+            parse(br);
+        } catch (Exception e) { throw new RuntimeException(e); }
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(c.getAssets().open("songs.txt"), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty() || line.startsWith("#")) continue;
+                String[] p = line.split("\\|");
+                Song s = new Song();
+                s.title = p[0].trim(); s.artist = p[1].trim();
+                s.prereqs = p[2].trim().split(",");
+                s.difficulty = Integer.parseInt(p[3].trim());
+                s.skills = p[4].trim(); s.tip = p[5].trim();
+                songs.add(s);
+            }
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    public void parse(BufferedReader br) throws java.io.IOException {
+        String line;
+        Unit u = null; Lesson l = null;
+        StringBuilder card = new StringBuilder();
+        while ((line = br.readLine()) != null) {
+            String t = line.trim();
+            if (t.startsWith("## ")) {
+                flush(l, card);
+                String[] p = t.substring(3).split("\\|");
+                l = new Lesson();
+                l.id = p[0].trim(); l.title = p[1].trim(); l.unit = u;
+                l.globalIndex = lessons.size();
+                u.lessons.add(l); lessons.add(l); byId.put(l.id, l);
+            } else if (t.startsWith("# ")) {
+                flush(l, card); l = null;
+                String[] p = t.substring(2).split("\\|");
+                u = new Unit();
+                u.id = p[0].trim(); u.title = p[1].trim(); u.subtitle = p.length > 2 ? p[2].trim() : "";
+                u.index = units.size();
+                units.add(u);
+            } else if (t.startsWith(">")) {
+                String body = t.substring(1).trim();
+                if (body.equals("---")) { flush(l, card); }
+                else { if (card.length() > 0) card.append("\n\n"); card.append(body); }
+            } else if (t.startsWith("q:") || t.startsWith("g:")) {
+                if (l != null) l.specs.add(t);
+            }
+        }
+        flush(l, card);
+    }
+
+    private void flush(Lesson l, StringBuilder card) {
+        if (l != null && card.length() > 0) l.cards.add(card.toString());
+        card.setLength(0);
+    }
+
+    /** Bir ünitenin sınav (atlama) testi için karışık speclər. */
+    public List<String> unitTestSpecs(Unit u, java.util.Random r) {
+        List<String> all = new ArrayList<>();
+        for (Lesson l : u.lessons) for (String s : l.specs) if (!s.contains("calibrate") && !s.contains("tune")) all.add(s);
+        java.util.Collections.shuffle(all, r);
+        return all.subList(0, Math.min(10, all.size()));
+    }
+}
