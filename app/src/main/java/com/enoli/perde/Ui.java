@@ -127,6 +127,26 @@ public final class Ui {
         return v;
     }
 
+    /** Android 15 kenardan kenara çizim: içeriği durum ve gezinme çubuklarının dışında tutar. */
+    @SuppressWarnings("deprecation")
+    public static void applySystemInsets(View root) {
+        final int l = root.getPaddingLeft(), t = root.getPaddingTop(), r = root.getPaddingRight(), b = root.getPaddingBottom();
+        root.setOnApplyWindowInsetsListener((v, in) -> {
+            int top, bottom, left, right;
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                android.graphics.Insets bars = in.getInsets(android.view.WindowInsets.Type.systemBars() | android.view.WindowInsets.Type.displayCutout());
+                android.graphics.Insets ime = in.getInsets(android.view.WindowInsets.Type.ime());
+                top = bars.top; left = bars.left; right = bars.right; bottom = Math.max(bars.bottom, ime.bottom);
+            } else {
+                top = in.getSystemWindowInsetTop(); bottom = in.getSystemWindowInsetBottom();
+                left = in.getSystemWindowInsetLeft(); right = in.getSystemWindowInsetRight();
+            }
+            v.setPadding(l + left, t + top, r + right, b + bottom);
+            return in;
+        });
+        root.requestApplyInsets();
+    }
+
     public static int darker(int color, float f) {
         int a = Color.alpha(color), r = (int) (Color.red(color) * f), g = (int) (Color.green(color) * f), b = (int) (Color.blue(color) * f);
         return Color.argb(a, r, g, b);

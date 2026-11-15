@@ -91,6 +91,7 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         confetti = new Views.Confetti(this);
         root.addView(confetti, new FrameLayout.LayoutParams(Ui.MATCH, Ui.MATCH));
         setContentView(root);
+        Ui.applySystemInsets(root);
     }
 
     static boolean isMic(Ex.Type t) {

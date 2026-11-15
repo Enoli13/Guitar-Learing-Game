@@ -60,6 +60,7 @@ public class SongActivity extends Activity implements ExerciseView.Host {
         col.setPadding(p, p, p, Ui.dp(this, 60));
         sv.addView(col);
         setContentView(sv);
+        Ui.applySystemInsets(sv);
 
         TextView back = Ui.text(this, "← Geri", 16, Ui.MUTED, true);
         back.setOnClickListener(v -> finish());

@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
         nav.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 8));
         root.addView(nav);
         setContentView(root);
+        Ui.applySystemInsets(root);
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 3);
         Reminder.schedule(this);
