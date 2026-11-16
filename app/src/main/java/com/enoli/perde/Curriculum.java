@@ -107,7 +107,7 @@ public class Curriculum {
         for (Unit u : units) {
             List<String> play = new ArrayList<>();
             for (Lesson l : u.lessons) for (String sp : l.specs) {
-                if (sp.startsWith("g: ") && sp.matches("g: (seq|strum|tap|changes|spider|scale|arp|chord|playnote|open|bend|improv|ivalplay|octave|staffplay|earback).*")) play.add(sp);
+                if (sp.startsWith("g: ") && sp.matches("g: (seq|strum|tap|read|sing|changes|spider|scale|arp|chord|playnote|open|bend|improv|ivalplay|octave|staffplay|earback).*")) play.add(sp);
             }
             if (play.size() >= 2) {
                 Lesson pr = new Lesson();

@@ -160,6 +160,10 @@ public final class Gen {
             case "changes": return changes(p);
             case "strum": return strum(p);
             case "tap": { p.put("tap", "1"); return strum(p); }
+            case "read": return read(p);
+            case "sing": return sing(p, r);
+            case "degreeear": return degreeEar(p, r);
+            case "chordfunc": return chordFunc(p, r);
             case "freestrum": {
                 Ex e = new Ex();
                 e.type = Ex.Type.RHYTHM;
@@ -765,20 +769,212 @@ public final class Gen {
         Ex e = new Ex();
         e.type = Ex.Type.RHYTHM;
         String pat = p.getOrDefault("p", "D.D.D.D.");
-        e.grid = Integer.parseInt(p.getOrDefault("grid", String.valueOf(pat.length())));
         e.beatsPerBar = Integer.parseInt(p.getOrDefault("bar", "4"));
         e.bpm = Float.parseFloat(p.getOrDefault("bpm", "60"));
-        e.bars = Integer.parseInt(p.getOrDefault("bars", "2"));
         e.strumChord = p.get("ch");
-        e.rhythmText = pat;
-        e.hits = new boolean[pat.length() * e.bars];
-        for (int b = 0; b < e.bars; b++) for (int i = 0; i < pat.length(); i++) {
-            char c = pat.charAt(i);
-            e.hits[b * pat.length() + i] = c == 'D' || c == 'U' || c == 'X' || c == 'x';
+        String[] barsPat;
+        if (pat.contains("|")) {
+            // ölçü ölçü yazılmış kalıp: "D.D.|D..D|..."
+            barsPat = pat.split("\\|");
+            e.bars = barsPat.length * Integer.parseInt(p.getOrDefault("rep", "1"));
+        } else {
+            barsPat = new String[]{pat};
+            e.bars = Integer.parseInt(p.getOrDefault("bars", "2"));
+        }
+        e.grid = Integer.parseInt(p.getOrDefault("grid", String.valueOf(barsPat[0].length())));
+        StringBuilder all = new StringBuilder();
+        for (int b = 0; b < e.bars; b++) all.append(barsPat[b % barsPat.length]);
+        e.rhythmText = all.toString();
+        e.hits = new boolean[all.length()];
+        for (int i = 0; i < all.length(); i++) {
+            char c = all.charAt(i);
+            e.hits[i] = c == 'D' || c == 'U' || c == 'X' || c == 'x';
         }
         e.tapMode = "1".equals(p.get("tap"));
+        e.voice = "1".equals(p.get("voice"));
+        e.pulseTap = "1".equals(p.get("pulse"));
+        if (e.pulseTap) e.voice = true;
+        if (e.voice) e.tapMode = false;
         e.tolMs = Float.parseFloat(p.getOrDefault("tol", "0"));
-        e.prompt = e.tapMode ? "Gitarı bırak: metronomla birlikte büyük düğmeye dokun" : e.strumChord != null ? e.strumChord + " akoruyla ritmi çal" : "Telleri sol elinle susturup ritmi çal";
+        gap(e, p);
+        e.prompt = e.pulseTap ? "Ekranda nabzı tut, ritmi sesle söyle" : e.voice ? "Ritmi “ta” diye sesle söyle" : e.tapMode ? "Gitarı bırak: metronomla birlikte büyük düğmeye dokun"
+                : e.strumChord != null ? e.strumChord + " akoruyla ritmi çal" : "Telleri sol elinle susturup ritmi çal";
+        if (p.containsKey("title")) e.prompt = p.get("title");
+        return e;
+    }
+
+    static void gap(Ex e, Map<String, String> p) {
+        if (!p.containsKey("gap")) return;
+        int[] g = range(p.get("gap"));
+        e.gapFromBar = g[0]; e.gapToBar = g[1];
+    }
+
+    /** Nota yazısıyla ritim okuma: r="q q h | e e q rq q". */
+    static Ex read(Map<String, String> p) {
+        Map<String, String> q = new HashMap<>(p);
+        q.put("p", "D");
+        Ex e = strum(q);
+        List<Views.RhythmNotation.Item> items = new ArrayList<>();
+        List<Float> hb = new ArrayList<>(); List<Integer> hd = new ArrayList<>();
+        int rep = Integer.parseInt(p.getOrDefault("rep", "1"));
+        float beat = 0;
+        String src = p.getOrDefault("r", "q q q q");
+        for (int k = 0; k < rep; k++) {
+            boolean bar = false;
+            for (String tok : src.trim().split("\\s+")) {
+                if (tok.equals("|")) { bar = true; continue; }
+                Views.RhythmNotation.Item it = new Views.RhythmNotation.Item();
+                it.rest = tok.startsWith("r");
+                String v = it.rest ? tok.substring(1) : tok;
+                it.dotted = v.contains(".");
+                it.triplet = v.contains("t");
+                it.value = v.replace(".", "").replace("t", "");
+                if (it.value.isEmpty()) it.value = "e";
+                it.dur = durOf(v);
+                it.beat = beat;
+                it.barBefore = bar; bar = false;
+                if (!it.rest) { hb.add(beat); hd.add(items.size()); }
+                items.add(it);
+                beat += it.dur;
+            }
+        }
+        e.notation = items;
+        e.hitBeats = new float[hb.size()]; e.hitDisp = new int[hd.size()];
+        for (int i = 0; i < hb.size(); i++) { e.hitBeats[i] = hb.get(i); e.hitDisp[i] = hd.get(i); }
+        e.hits = new boolean[0];
+        e.bars = (int) Math.ceil(beat / e.beatsPerBar - 0.001);
+        e.rhythmText = src;
+        if (!p.containsKey("title")) e.prompt = e.pulseTap ? "Notayı oku: ekranda nabzı tut, ritmi “ta” diye söyle"
+                : e.voice ? "Notayı oku ve ritmi “ta” diye söyle" : e.tapMode ? "Notayı oku ve ritmi düğmeye dokunarak çal" : "Notayı oku ve ritmi susturulmuş tellerle çal";
+        return e;
+    }
+
+    // ---------- Solfej / işlevsel kulak (movable do) ----------
+    static final String[] SOLF_DEG = {"Do (1)", "Re (2)", "Mi (3)", "Fa (4)", "Sol (5)", "La (6)", "Si (7)"};
+
+    /** Tonaliteyi kuran I–IV–V–I kadansı. */
+    static List<String> cadence(String key, boolean minor) {
+        List<String> l = new ArrayList<>();
+        int k = Theory.parsePc(key);
+        if (minor) { l.add(Theory.SHARP[k] + "m"); l.add(Theory.SHARP[Theory.pc(k + 5)] + "m"); l.add(Theory.SHARP[Theory.pc(k + 7)]); l.add(Theory.SHARP[k] + "m"); }
+        else { l.add(Theory.SHARP[k]); l.add(Theory.SHARP[Theory.pc(k + 5)]); l.add(Theory.SHARP[Theory.pc(k + 7)]); l.add(Theory.SHARP[k]); }
+        return l;
+    }
+
+    static int degPc(String key, int deg, boolean minor) {
+        int[] sc = Theory.SCALES.get(minor ? "minor" : "major");
+        return Theory.pc(Theory.parsePc(key) + sc[deg % 7]);
+    }
+
+    static int degMidi(String key, int deg, boolean minor) {
+        int t = 48 + Theory.parsePc(key);
+        if (t > 54) t -= 12;
+        return t + 12 * (deg / 7) + Theory.SCALES.get(minor ? "minor" : "major")[deg % 7];
+    }
+
+    static Ex degreeEar(Map<String, String> p, Random r) {
+        String key = pick(p.getOrDefault("keys", "C,G,D,A,E,F").split(","), r);
+        boolean minor = "1".equals(p.get("minor"));
+        int[] degs = ints(p.getOrDefault("degs", "1,3,5"));
+        int dg = pick(degs, r) - 1;
+        List<String> pool = new ArrayList<>();
+        for (int d : degs) pool.add(SOLF_DEG[d - 1]);
+        Ex e = choice("Dinle: önce tonaliteyi kuran akorlar, sonra tek bir nota. Bu nota tonalitenin hangi derecesi?", SOLF_DEG[dg], pool, r);
+        e.audioChords = cadence(key, minor);
+        int m = 55 + Theory.pc(degPc(key, dg, minor) - 7);
+        e.audio = new float[]{m};
+        e.explain = "Do'ya göre his: Do yuva, Sol güçlü ve açık, Mi tatlı, Si Do'ya çekilir, Fa Mi'ye iner.";
+        return e;
+    }
+
+    static final String[][] FUNC = {
+            {"I", "0", ""}, {"ii", "2", "m"}, {"iii", "4", "m"}, {"IV", "5", ""}, {"V", "7", ""}, {"vi", "9", "m"}, {"vii°", "11", "dim"},
+            {"V7", "7", "7"}, {"bVII", "10", ""}, {"bVI", "8", ""}, {"iv", "5", "m"}, {"V/V", "2", "7"}, {"V/vi", "4", "7"}, {"bIII", "3", ""},
+    };
+
+    static Ex chordFunc(Map<String, String> p, Random r) {
+        String key = pick(p.getOrDefault("keys", "C,G,D,A").split(","), r);
+        String[] set = p.getOrDefault("set", "I,IV,V").split(",");
+        String f = pick(set, r);
+        String[] row = FUNC[0];
+        for (String[] x : FUNC) if (x[0].equals(f)) row = x;
+        String chord = Theory.SHARP[Theory.pc(Theory.parsePc(key) + Integer.parseInt(row[1]))] + row[2];
+        List<String> pool = new ArrayList<>(); java.util.Collections.addAll(pool, set);
+        Ex e = choice("Dinle: tonaliteyi kuran akorlardan sonra çalınan akor hangi işlevde?", f, pool, r);
+        e.audioChords = new ArrayList<>(cadence(key, false));
+        e.audioChords.add(chord);
+        e.explain = key + " tonunda " + f + " = " + chord + ". İpucu: önce bas notasını mırıldan, sonra Do'ya olan uzaklığını düşün.";
+        return e;
+    }
+
+    /** Sesle söyleme görevleri: mikrofon ses perdesini ölçer. */
+    static Ex sing(Map<String, String> p, Random r) {
+        String mode = p.getOrDefault("mode", "deg");
+        String key = pick(p.getOrDefault("keys", "C").split(","), r);
+        boolean minor = "1".equals(p.get("minor"));
+        Ex e = new Ex();
+        e.type = Ex.Type.SING;
+        e.voice = true;
+        e.strictOctave = false;
+        int k = Theory.parsePc(key);
+        switch (mode) {
+            case "scale": {
+                int n = Integer.parseInt(p.getOrDefault("len", "3"));
+                e.audioChords = cadence(key, minor);
+                for (int i = 0; i < n; i++) e.notes.add(Ex.Note.ofMidi(degMidi(key, i, minor), i, 1));
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < n; i++) sb.append(i > 0 ? " – " : "").append(SOLF_DEG[i % 7].split(" ")[0]);
+                e.prompt = "Tonaliteyi dinle, sonra sırayla söyle: " + sb;
+                break;
+            }
+            case "root": {
+                String[] set = p.getOrDefault("set", "I,IV,V").split(",");
+                String f = pick(set, r);
+                String[] row = FUNC[0];
+                for (String[] x : FUNC) if (x[0].equals(f)) row = x;
+                int root = Theory.pc(k + Integer.parseInt(row[1]));
+                String chord = Theory.SHARP[root] + row[2];
+                e.audioChords = new ArrayList<>(cadence(key, false));
+                e.audioChords.add(chord);
+                e.notes.add(Ex.Note.ofMidi(48 + root, 0, 1));
+                e.prompt = "Son çalınan akorun KÖK notasını (en pes, temel ses) söyle";
+                e.singLabel = "kök";
+                e.explain = "Akor: " + chord + " (" + f + "), kökü " + Theory.SHARP[root];
+                break;
+            }
+            case "back": {
+                int[] degs = ints(p.getOrDefault("degs", "1,2,3"));
+                int n = Integer.parseInt(p.getOrDefault("len", "3"));
+                e.audioChords = cadence(key, minor);
+                float[] mel = new float[n];
+                int prev = 0;
+                for (int i = 0; i < n; i++) {
+                    int d = 0;
+                    if (i > 0) {
+                        // adım adım hareket: bir önceki dereceye en fazla 2 uzaklıkta
+                        List<Integer> near = new ArrayList<>();
+                        for (int dd : degs) if (Math.abs(dd - 1 - prev) <= 2 && dd - 1 != prev) near.add(dd - 1);
+                        d = near.isEmpty() ? degs[r.nextInt(degs.length)] - 1 : near.get(r.nextInt(near.size()));
+                    }
+                    prev = d;
+                    int m = degMidi(key, d, minor);
+                    mel[i] = m;
+                    e.notes.add(Ex.Note.ofMidi(m, i, 1));
+                }
+                e.audio = mel;
+                e.hideTarget = true;
+                e.prompt = "Dinle ve melodiyi sesle tekrar et (ilk nota Do)";
+                break;
+            }
+            default: {
+                int[] degs = ints(p.getOrDefault("degs", "1,3,5"));
+                int d = pick(degs, r) - 1;
+                e.audioChords = cadence(key, minor);
+                e.notes.add(Ex.Note.ofMidi(degMidi(key, d, minor), 0, 1));
+                e.prompt = "Tonaliteyi dinle, sonra " + SOLF_DEG[d] + " notasını söyle";
+                e.singLabel = SOLF_DEG[d];
+            }
+        }
         if (p.containsKey("title")) e.prompt = p.get("title");
         return e;
     }

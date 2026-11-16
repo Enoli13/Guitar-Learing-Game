@@ -35,11 +35,17 @@ public class Harness {
                         }
                         if (e.type == Ex.Type.PLAY_SEQ || e.type == Ex.Type.PLAY_NOTES) {
                             check(!e.notes.isEmpty(), "nota yok: " + s);
-                            for (Ex.Note n : e.notes) check(n.midi >= 40 && n.midi <= 92, "aralık dışı midi " + n.midi + " : " + s);
+                            if (e.type != Ex.Type.SING) for (Ex.Note n : e.notes) check(n.midi >= 40 && n.midi <= 92, "aralık dışı midi " + n.midi + " : " + s);
                         }
                         if (e.type == Ex.Type.PLAY_CHORD) check(e.chordShape != null, "şekil yok: " + s + " " + e.chord);
                         if (e.type == Ex.Type.CHANGES) for (String c : e.chords) check(Theory.shapeFor(c) != null, "şekil yok: " + c);
-                        if (e.type == Ex.Type.RHYTHM && e.freeCount == 0) check(e.hits != null && e.hits.length > 0 && e.grid > 0, "ritim boş: " + s);
+                        if (e.type == Ex.Type.RHYTHM && e.freeCount == 0 && e.hitBeats == null) check(e.hits != null && e.hits.length > 0 && e.grid > 0, "ritim boş: " + s);
+                        if (e.hitBeats != null) { check(e.hitBeats.length > 0 && e.notation != null && !e.notation.isEmpty(), "okuma boş: " + s);
+                            float tot = 0; for (Views.RhythmNotation.Item it : e.notation) tot += it.dur;
+                            check(Math.abs(tot / e.beatsPerBar - Math.round(tot / e.beatsPerBar)) < 0.01, "okuma ölçüye oturmuyor (" + tot + " vuruş): " + s); }
+                        if (e.type == Ex.Type.SING) { check(!e.notes.isEmpty() && e.audioChords != null, "söyleme boş: " + s); for (Ex.Note n : e.notes) check(n.midi >= 40 && n.midi < 72, "söyleme aralığı " + n.midi + ": " + s); }
+                        if (e.gapFromBar > 0) check(e.gapToBar < e.bars, "sessizlik son ölçüyü kapsıyor: " + s);
+                        if (e.prompt != null) check(!e.prompt.contains("\\"), "tırnak bozuk: " + s);
                         if (e.prompt != null && e.prompt.contains("\\")) check(false, "kaçış karakteri: " + s);
                         if (e.type == Ex.Type.RHYTHM && e.strumChord != null) check(Theory.shapeFor(e.strumChord) != null, "şekil yok");
                     }
@@ -170,6 +176,53 @@ public class Harness {
             for (int k = 0; k < 10; k++) { double t0 = (0.3 + k * 0.3) * 1e9; for (long t : on2) if (Math.abs(t - t0) < 30e6) { g2++; break; } }
             System.out.println("Susturulmuş vuruş: " + g2 + "/10 (toplam " + on2.size() + ")");
             check(g2 >= 9 && on2.size() <= 11, "susturulmuş vuruşlar");
+        }
+
+        // 4c) İnsan sesi: "ta" heceleri (vuruş) ve titreşimli (vibrato) uzun nota (perde)
+        {
+            Random rv = new Random(9);
+            float[] v = new float[44100 * 4];
+            double[] taT = {0.5, 1.0, 1.5, 2.0, 2.75, 3.25};
+            for (double t0 : taT) {
+                int off = (int) (t0 * 44100);
+                for (int i = 0; i < 6000 && off + i < v.length; i++) {
+                    double tt = i / 44100.0;
+                    double env = Math.min(1, i / 300.0) * Math.exp(-tt / 0.09);
+                    double f0 = 130 + 10 * Math.sin(2 * Math.PI * 5 * tt);
+                    double voiced = 0;
+                    for (int h = 1; h <= 8; h++) voiced += Math.sin(2 * Math.PI * f0 * h * tt) / h;
+                    double burst = i < 400 ? (rv.nextDouble() - 0.5) * 0.8 : 0; // "t" patlaması
+                    v[off + i] += (float) (0.25 * env * voiced + burst * 0.3);
+                }
+            }
+            List<Long> on = new ArrayList<>();
+            countOnsets(v, on);
+            int g = 0;
+            for (double t0 : taT) for (long t : on) if (Math.abs(t - t0 * 1e9) < 40e6) { g++; break; }
+            System.out.println("Ses hecesi: " + g + "/" + taT.length + " (toplam " + on.size() + ")");
+            check(g == taT.length && on.size() <= taT.length + 1, "ta heceleri");
+            // vibratolu uzun ses: G3 (196 Hz) ±30 cent
+            float[] sv = new float[44100 * 2];
+            for (int i = 0; i < sv.length; i++) {
+                double tt = i / 44100.0;
+                double f0 = 196 * Math.pow(2, 0.3 / 12 * Math.sin(2 * Math.PI * 5.5 * tt));
+                double ph = 0; // basit: anlık frekansla yaklaşık
+                double val = 0;
+                for (int h = 1; h <= 10; h++) val += Math.sin(2 * Math.PI * 196 * h * tt + h * 0.3 / 12 * Math.log(2) * 196 / 5.5 * -Math.cos(2 * Math.PI * 5.5 * tt)) / (h * h * 0.6 + 0.4);
+                sv[i] = (float) (0.2 * val);
+            }
+            AudioIn in2 = new AudioIn();
+            final int[] okF = {0}, allF = {0};
+            in2.setListener(new AudioIn.Listener() {
+                public void onFrame(long n, float m, float c, float db) { if (m > 0) { allF[0]++; float d = m - 55; d -= 12 * Math.round(d / 12f); if (Math.abs(d) < 0.45f) okF[0]++; } }
+                public void onNote(long n, float m, boolean a) {}
+                public void onOnset(long n, float db) {}
+            });
+            in2.resetAnalysis(0);
+            short[] b2 = new short[256];
+            for (int i = 0; i + 256 <= sv.length; i += 256) { for (int k = 0; k < 256; k++) b2[k] = (short) (sv[i + k] * 32767 * 0.6f); in2.process(b2, 256); }
+            System.out.println("Vibratolu ses kareleri doğru: " + okF[0] + "/" + allF[0]);
+            check(allF[0] > 50 && okF[0] >= allF[0] * 0.9, "şarkı söyleme perde tespiti");
         }
 
         // 5) Akor tanıma

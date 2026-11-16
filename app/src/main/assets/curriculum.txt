@@ -30,6 +30,8 @@ g: open s=6-1
 g: open s=1-6
 g: open s=6,4,5,3,2,1
 g: playnote s=1-6 f=0-0 len=5 show=name
+
+# n01 | Nabız | Ritmin temeli: nabzı bul, içselleştir, sesle ve iki elle taşı
 ## u01e | Ritmi hisset (gitarsız)
 > Müzikteki nabza VURUŞ denir. Tempo, dakikadaki vuruş sayısıdır: BPM. 60 BPM saniyede bir vuruştur.
 > Gitar çalmadan önce ritmi bedeninde hissetmen gerekir. Önce gitarı bırak: metronom "tık" dediği anda ekrandaki büyük düğmeye dokun. Turuncu daire 1. vuruşu, mavi daireler 2-3-4. vuruşları gösterir.
@@ -41,6 +43,29 @@ g: tap p="D...D..." bpm=60 bars=2 tol=200 title="Sadece 1. ve 3. vuruşlarda dok
 g: tap p="D.D.D.D." bpm=60 bars=2 tol=180 title="Her vuruşta dokun (60 BPM)"
 g: tap p="D.D.D.D." bpm=70 bars=2 title="Her vuruşta dokun (70 BPM)"
 g: tap p="D.D...D." bpm=60 bars=2 title="3. vuruşta dur, dokunma"
+## n01a | Nabzı içselleştir
+> Ritim yetkinliğinin temeli NABIZ'dır: onu dışarıdan (metronom) duymak yetmez, içeride taşıman gerekir. Bu derste metronom bir süre SUSACAK; sen aynı tempoda dokunmaya devam edeceksin. Metronom geri döndüğünde onunla hâlâ aynı yerde olmalısın.
+> Yöntem: metronom çalarken içinden "1-2-3-4" say ve başını/ayağını salla. Sustuğunda sayma ve sallanma devam etsin; dokunuş, sayının üstüne düşsün.
+g: tap p="D.D.D.D." bpm=60 bars=4 gap=3 tol=200 title="3. ölçüde metronom susar — sen devam et"
+g: tap p="D.D.D.D." bpm=60 bars=4 gap=2-3 tol=190 title="2 ölçü sessizlik — içinden say"
+g: tap p="D.D.D.D." bpm=72 bars=5 gap=2-4 title="3 ölçü sessizlik (72 BPM)"
+g: tap p="D.D.D.D." bpm=50 bars=4 gap=2-3 title="Yavaş tempoda sessizlik daha zordur (50 BPM)"
+g: tap p="D...D..." bpm=60 bars=4 gap=2-3 title="Sessizlikte sadece 1 ve 3"
+## n01b | Ritmi sesle söyle
+> Hindemith'in öğretiminde ritim önce SESLE yapılır: ses, elden önce gelir. Her notayı kısa ve net bir "ta" ile söyle; mikrofon seni dinleyecek. Uzun notalarda "taa" diye uzatabilirsin ama yeni hece çıkarma.
+> Bu derste ritmi NOTA YAZISIYLA okuyacaksın: dolu yuvarlak + sap = dörtlük (1 vuruş), içi boş + sap = ikilik (2 vuruş), içi boş sapsız = birlik (4 vuruş).
+g: read voice=1 r="q q q q | q q q q" bpm=60 tol=200 title="Dörtlükleri “ta” diye söyle"
+g: read voice=1 r="h h | q q h" bpm=60 tol=200
+g: read voice=1 r="w | h q q" bpm=60
+g: read voice=1 r="q q h | h h | q q q q | w" bpm=65
+g: read voice=1 r="q q q q | q q q q | q q q q" bpm=60 gap=2 title="Metronomsuz ölçüde de söylemeye devam et"
+## n01c | İki parça: nabız + ritim
+> Hindemith'in en önemli egzersizi: iki şeyi aynı anda yapmak. Bir elinle NABZI (her vuruş) ekrana dokunarak tut, sesinle RİTMİ söyle. İkisi birbirinden bağımsız olmalı: ritim uzun notadayken nabız durmaz.
+> Önce yavaş ve basit başlıyoruz. Zorlanırsan önce sadece nabzı dokun, ritmi içinden söyle; sonra sesi ekle.
+g: read pulse=1 r="h h | h h" bpm=55 tol=220 title="Nabız dokun + ikilikleri söyle"
+g: read pulse=1 r="w | w" bpm=55 tol=220 title="Nabız dokun + birlikleri söyle (sesi 4 vuruş uzat)"
+g: read pulse=1 r="q q h | h q q" bpm=55
+g: read pulse=1 r="h q q | q q h | w" bpm=60
 ## u01f | Susturulmuş vuruş
 > Şimdi aynısını gitarla yapacağız. SUSTURULMUŞ VURUŞ: sol elinin parmaklarını tellerin üstüne hafifçe yatır (basma, sadece değsin), sağ elle penayla tellere vur. "Çık" diye kuru bir ses çıkar. Bu, ritim çalışmalarının temelidir.
 > Önce mikrofonun seni duyup duymadığını test edeceğiz, sonra metronomla adım adım ilerleyeceğiz: önce yavaş ve geniş toleransla, sonra normal.
@@ -50,6 +75,13 @@ g: strum p="D.D.D.D." bpm=50 bars=1 tol=200 title="Her vuruşta vur (50 BPM, kol
 g: strum p="D.D.D.D." bpm=55 bars=2 tol=160
 g: strum p="D.D.D.D." bpm=60 bars=2
 g: seq bpm=60 tab="6:0/q 6:0/q 6:0/q 6:0/q 5:0/q 5:0/q 5:0/q 5:0/q" title="Açık 6. ve 5. teller, dörtlükler"
+
+## n01d | Gitarla nabzı içselleştir
+> Şimdi aynı içselleştirmeyi gitarla yap: susturulmuş vuruşla çal, metronom sustuğunda tempoyu koru.
+g: strum p="D.D.D.D." bpm=55 bars=4 gap=3 tol=200 title="3. ölçüde metronom susar"
+g: strum p="D.D.D.D." bpm=60 bars=4 gap=2-3
+g: strum p="D...D..." bpm=60 bars=4 gap=2-3
+g: read r="q q h | h h | q q q q | w" bpm=60 title="Nota yazısından oku ve çal"
 
 # u02 | Müzik Alfabesi | Notalar, yarım ses, ilk pozisyon
 ## u02a | Yedi nota
@@ -100,6 +132,35 @@ g: fretfind s=1-6 f=0-5 n=4
 g: playnote s=1-6 f=0-5 len=4 show=name
 g: playnote s=1-6 f=0-3 len=5
 
+# k01 | Solfej ve Derece Duyma | Movable do: notaları tonalitedeki görevleriyle duy ve söyle
+## k01a | Do, Re, Mi
+> Kulak eğitiminde amaç notaları tek başına değil, TONALİTE içindeki görevleriyle duymaktır. Bunun için "hareketli Do" (movable do) kullanırız: hangi tondaysak tonik (yuva) Do'dur; Re 2. derece, Mi 3. derece... Böylece C majörde de G majörde de "Sol" hep aynı hissi verir.
+> Her görevde önce uygulama I–IV–V–I akorlarıyla tonaliteyi kuracak, sonra sen sesinle söyleyeceksin. Oktav önemli değil: kalın ya da ince sesle söyleyebilirsin. Mikrofon ses perdeni ölçer.
+g: sing mode=deg degs=1 keys=C title="Tonaliteyi dinle ve Do'yu (yuva) söyle"
+g: sing mode=scale len=2 keys=C
+g: sing mode=scale len=3 keys=C
+g: sing mode=scale len=3 keys=G,D,A
+g: degreeear degs=1,3 n=3
+## k01b | Do, Mi, Sol (majör üçlü)
+> Do–Mi–Sol tonik akorun notalarıdır, kulağın en sağlam dayanak noktaları. Sol en "açık" ve güçlü, Mi en "tatlı" duyulur.
+g: degreeear degs=1,3,5 n=4
+g: sing mode=deg degs=1,3,5 keys=C,G n=3
+g: sing mode=scale len=5 keys=C
+g: sing mode=back degs=1,3,5 len=3 keys=C
+## k01c | Fa, La, Si, Re
+> Fa Mi'ye inmek ister, Si (yeden) Do'ya yükselmek ister, Re Do ile Mi arasında köprüdür, La tatlı ve hüzünlü bir renk verir. Bu çekimleri duymak, melodiyi tahmin etmenin anahtarıdır.
+g: degreeear degs=1,2,3,4,5 n=3
+g: degreeear degs=1,3,5,6,7 n=3
+g: degreeear degs=1,2,3,4,5,6,7 n=4
+g: sing mode=deg degs=2,4,6,7 keys=C,G n=3
+g: sing mode=scale len=8 keys=C title="Do'dan üst Do'ya majör gamı söyle"
+## k01d | Melodiyi kulaktan tekrar et
+> Bas yürüyüşleri ve kısa melodiler: dinle, önce sesle tekrar et, sonra gitarda bul. Önce SÖYLEMEK, sonra ÇALMAK: söyleyebildiğin şeyi çok daha kolay çalarsın.
+g: sing mode=back degs=1,2,3 len=3 keys=C n=2
+g: sing mode=back degs=1,2,3,4,5 len=4 keys=C,G n=2
+g: earback scale=C:major len=3 lo=48 hi=60 n=2
+g: earback scale=G:major len=4 lo=43 hi=55 n=2
+
 # u03 | Tab Okuma ve İlk Melodiler | Tab, örümcek, zamanında çalmak
 ## u03a | Tab nasıl okunur
 > TAB (tablatür) gitara özel yazımdır. 6 yatay çizgi 6 teli gösterir: EN ÜSTTEKİ çizgi 1. tel (ince E), en alttaki 6. tel. Çizgideki sayı perde numarasıdır.
@@ -132,12 +193,18 @@ g: seq bpm=80 title="Frère Jacques" tab="2:1/q 2:3/q 1:0/q 2:1/q 2:1/q 2:3/q 1:
 > 4/4 ölçüde her ölçü 4 dörtlük vuruştur. BİRLİK nota 4 vuruş, İKİLİK 2, DÖRTLÜK 1, SEKİZLİK 1/2, ON ALTILIK 1/4 vuruş sürer.
 > Ölçü çizgileri (|) müziği eşit parçalara böler. Saymak: "1 2 3 4", sekizliklerle "1 ve 2 ve 3 ve 4 ve".
 g: rhythmval n=6
+g: read tap=1 r="q q q q | h h | w | q q h" bpm=60 tol=200 title="Nota yazısını oku ve dokun"
+g: read voice=1 r="h q q | q q h | w" bpm=60
+g: read r="q q h | h h | w" bpm=60 title="Oku ve susturulmuş tellerle çal"
 g: tap p="D.......D......." grid=16 bpm=60 bars=1 tol=200 title="Birlikler: her ölçünün sadece 1. vuruşunda dokun"
 g: tap p="D...D..." bpm=60 bars=2 title="İkilikler: 1 ve 3'te dokun"
 g: strum p="D...D..." bpm=60 bars=2
 g: strum p="D.......D......." grid=16 bpm=60 bars=1 bar=4 title="Birlikler"
 ## u04b | Sekizlikler ve aşağı-yukarı vuruş
 > Sekizlikleri aşağı-yukarı (D-U) çal: vuruşun kendisinde AŞAĞI, "ve"de YUKARI. Sağ el saat sarkacı gibi hiç durmadan sallanır; çalmadığın yerde bile hareket devam eder ama tellere değmez. Bu, ritmin sırrıdır.
+g: read tap=1 r="e e e e q q | q q e e e e" bpm=55 title="Sekizlik çiftlerini oku ve dokun"
+g: read voice=1 r="e e q e e q | q e e h" bpm=55 title="Sekizlikleri “ta-ta” diye söyle"
+g: read pulse=1 r="e e e e h | q e e q q" bpm=50 tol=200 title="Nabız dokun + sekizlikleri söyle"
 g: tap p="DUDUDUDU" bpm=50 bars=2 title="Sekizlikler: her vuruşta ve aradaki “ve”de dokun"
 g: tap p="D.DUD.DU" bpm=55 bars=2
 g: strum p="DUDUDUDU" bpm=50 bars=2 tol=150 title="Sekizlikler gitarla (yavaş)"
@@ -148,6 +215,10 @@ g: strum p="D.DU.UDU" bpm=75 bars=2
 ## u04c | Susler
 > SUS, sessizlik işaretidir ve notalar kadar önemlidir. Her nota değerinin bir sus karşılığı vardır (dörtlük sus = 1 vuruş sessizlik).
 > Sus sırasında sağ el hareketi devam eder, sadece tellere değmez. Sus yerinde çalarsan görev başarısız olur!
+g: read tap=1 r="q rq q rq | q q rh" bpm=60 title="Susları oku: sus yerinde dokunma"
+g: read voice=1 r="rq q rq q | h rh" bpm=60
+g: read r="q rq q q | rq q rq q" bpm=60 title="Susları gitarla çal"
+g: read tap=1 r="e e rq e e rq | e re e re q q" bpm=55 title="Sekizlik susları"
 g: tap p="D.D...D." bpm=60 bars=2
 g: tap p="..D...D." bpm=60 bars=2
 g: strum p="D.D...D." bpm=60 bars=2
@@ -334,6 +405,17 @@ q: Majörde hangi dereceler minör akordur? | ii, iii, vi | ii, IV, V | iii, V, 
 q: Majörde vii° akoru hangi türdür? | Eksik (dim) | Minör | Majör | Artık
 g: diatonic keys=C,G,D n=5
 g: diatonic keys=C,G,D,A,E,F n=5
+## u10e | I, IV, V'yi kulakla tanı
+> Akorları adlarıyla değil, tonalitedeki İŞLEVLERİYLE duy: I yuvadır (dinlenme), IV yuvadan uzaklaşır (açılma), V gerilimdir ve I'e dönmek ister. Rock ve blues şarkılarının çoğu bu üç akorla yazılır.
+> Yöntem: önce akorun KÖKÜNÜ mırıldan (en pes nota), sonra Do'ya göre hangi derece olduğunu düşün: Do = I, Fa = IV, Sol = V.
+g: chordfunc set=I,IV,V n=5
+g: sing mode=root set=I,IV,V keys=C,G n=3
+g: chordfunc set=I,IV,V,vi n=4
+## u10f | ii, iii ve vi: minör akorlar
+> Majör tonun minör akorları: vi (La) hüzünlü bir "yan yuva", ii (Re) çoğu zaman V'e hazırlık yapar, iii (Mi) en belirsiz olanıdır. Kök notayı söylemek, akoru tanımanın en hızlı yoludur.
+g: chordfunc set=I,ii,IV,V,vi n=5
+g: chordfunc set=I,ii,iii,IV,V,vi n=4
+g: sing mode=root set=I,ii,IV,V,vi keys=C,G,D n=3
 ## u10c | Yaygın akor dizgeleri
 > I–IV–V: rock'n'roll ve blues'un temeli. I–V–vi–IV: sayısız pop şarkısı. vi–IV–I–V: aynı akorlar, hüzünlü başlangıç. ii–V–I: caz'ın en temel kadansı. I–vi–IV–V: 50'ler dizisi.
 > Dizgeleri Romen rakamıyla düşünmek, bir şarkıyı her tona anında aktarmanı (transpoze) sağlar.
@@ -356,11 +438,15 @@ g: diatonic keys=G,D,A,E n=4
 g: rhythmval n=4
 g: seq bpm=70 tab="5:3/q. 5:3/e 5:2/q 5:0/q 6:3/q. 6:3/e 6:0/h"
 g: seq bpm=70 tab="4:2/h. 4:0/q 5:3/q. 5:2/e 5:0/h"
+g: read tap=1 r="q. e q q | h. q" bpm=60 title="Noktalı notaları oku ve dokun"
+g: read pulse=1 r="q. e h | q. e q q" bpm=55 tol=200 title="Nabız dokun + noktalı ritmi söyle"
 ## u11b | On altılıklar
 > Bir vuruş = 4 on altılık: "1 e ve a". Önce yavaş tempo, sonra hızlan. Alternatif pena (aşağı-yukarı) şarttır.
 g: seq bpm=50 tab="6:0/s 6:0/s 6:0/s 6:0/s 6:3/s 6:3/s 6:3/s 6:3/s 6:5/s 6:5/s 6:5/s 6:5/s 6:3/s 6:3/s 6:3/s 6:3/s"
 g: seq bpm=60 tab="5:0/e 5:0/s 5:0/s 5:3/e 5:3/s 5:3/s 5:5/e 5:5/s 5:5/s 5:3/q"
 g: strum p="D.DUD.DUD.DUD.DU" grid=16 bpm=60 bars=1
+g: read tap=1 r="s s s s q e e q | s s e e s s q q" bpm=50 title="On altılıkları oku ve dokun"
+g: read voice=1 r="e s s e s s q q" bpm=50 rep=2
 ## u11c | Senkop
 > SENKOP, vurguyu zayıf zamana (vuruş arasına, "ve"ye) kaydırmaktır. Funk, reggae, rock — groove'un ruhu buradadır.
 > Senkoplu ritim çalarken sağ el sarkacını asla durdurma; vuruş aralarında "boşa" sallan.
@@ -368,11 +454,16 @@ g: strum p="D..U.UD." bpm=60 bars=2
 g: tap p=".U.U.U.U" bpm=60 bars=2 title="Sadece vuruş aralarında (“ve”) dokun"
 g: strum p=".U.U.U.U" bpm=60 bars=2
 g: seq bpm=70 tab="6:0/e 6:3/q 6:0/e 6:5/q 6:3/q"
+g: read tap=1 r="e q e q q | e q e h" bpm=60 title="Senkobu oku: vurgu vuruş aralarında"
+g: read pulse=1 r="e q e q q | e q e h" bpm=55 tol=200 title="Nabız dokun + senkoplu ritmi söyle"
+g: tap p="D.D.D.D." bpm=70 bars=4 gap=2-3 title="Senkoptan önce nabzı sağlamla: 2 ölçü sessizlik"
 ## u11d | Triole ve shuffle
 > TRİOLE (üçleme): bir vuruşu üç eşit parçaya bölmek. SHUFFLE (swing) ise triolenin 1. ve 3. parçasını çalmaktır: uzun-kısa, "daa-da daa-da". Blues ve Guns N' Roses ritimlerinde sık görülür.
 g: seq bpm=60 tab="5:0/et 5:0/et 5:0/et 5:2/et 5:2/et 5:2/et 5:4/et 5:4/et 5:4/et 5:2/et 5:2/et 5:2/et"
 g: seq bpm=70 tab="6:0/qt 6:4/et 6:0/qt 6:4/et 6:0/qt 6:4/et 6:0/qt 6:4/et" title="Shuffle (uzun-kısa)"
 g: seq bpm=80 tab="5:0/qt 5:4/et 5:0/qt 5:4/et 5:0/qt 5:6/et 5:0/qt 5:6/et" title="Blues shuffle riffi"
+g: read tap=1 r="et et et q et et et q" bpm=55 title="Triole: bir vuruşu üçe böl"
+g: read voice=1 r="et et et et et et q q" bpm=55
 ## u11e | Ölçü türleri: 3/4, 6/8, 12/8
 > 3/4: ölçüde 3 dörtlük (vals). 6/8: ölçüde 6 sekizlik, 3'erli iki grup halinde hissedilir (1-2-3 4-5-6). 12/8: dört grup üçlü — slow blues ve rock baladlarının ölçüsü.
 > Üst sayı ölçüdeki vuruş sayısını, alt sayı vuruş birimini (4 = dörtlük, 8 = sekizlik) gösterir.
@@ -504,6 +595,7 @@ q: Cmaj7 ile C7 akorları arasındaki tek fark hangi notadır? | B ↔ Bb | E �
 g: chordspell types=maj7,7,m7 roots=C,D,E,F,G,A n=4
 g: chordear types=maj7,7,m7 n=4
 g: chord name=Cmaj7,Am7,E7,D7,G7,A7 n=3
+g: chordfunc set=I,IV,V,V7 n=3
 ## u16b | m7b5, dim7, aug
 > m7b5 (yarım eksik, ø) = 1 b3 b5 b7: majörde vii akoru, minörde ii akoru. dim7 = 1 b3 b5 bb7 (6): simetrik, her 3 perdede kendini tekrarlar. aug: 1 3 #5, her 4 perdede tekrarlar.
 q: dim7 akor şekli sapta kaç perdede bir aynı akoru verir? | 3 | 4 | 2 | 6
@@ -612,6 +704,9 @@ q: Armonik minörü doğal minörden ayıran nota hangisi? | Yükseltilmiş 7 | 
 q: A armonik minörde hangi nota diyezlidir? | G# | F# | C# | D#
 g: scalespell keys=A,E,D types=minor,harmmin,melmin n=4
 g: scale key=A type=harmmin pos=5 bpm=60 dur=q
+g: degreeear minor=1 degs=1,3,5,6,7 keys=A,E,D n=4
+g: sing mode=scale minor=1 len=5 keys=A
+g: sing mode=back minor=1 degs=1,2,3,4,5 len=4 keys=A n=2
 ## u20b | Armonik minörün dominantı
 > A armonik minörde V akoru E7'dir (E G# B D) ve Am'ye güçlü çözülür. E'den başlayan armonik minör moduna FRİGYEN DOMİNANT denir (1 b2 3 4 5 b6 b7): Doğu, flamenko ve metal sololarının sesi.
 q: A armonik minörün 5. modu hangisidir? | E Frigyen dominant | E Frigyen | E Miksolidyen | E Lokriyen
@@ -641,6 +736,27 @@ g: chordspell types=maj7,7,m7,m7b5 roots=C,D,G,A n=2
 > SWEEP: penayı tek yönde, teller arasında "süpürerek" geçirmek; her tele tek nota. Parmaklar notaları sırayla basar ve hemen kaldırır (yoksa notalar akor gibi birbirine karışır). Önce 3 telde, yavaş.
 g: seq bpm=60 tab="3:14/t 2:13/t 1:12/t 2:13/t 3:14/t 2:13/t" rep=2 title="3 tel Am sweep (yavaş)"
 g: seq bpm=60 tab="3:12/t 2:13/t 1:12/t 2:13/t 3:12/t 2:13/t" rep=2 title="3 tel C sweep"
+
+# c01 | Poliritim ve Çapraz Ritim | 3'e karşı 4, 3+3+2, ölçüyü aşan kalıplar
+## c01a | Ölçüyü aşan üçlü gruplar
+> ÇAPRAZ RİTİM (crossrhythm): uzunluğu ölçüyü tam bölmeyen bir kalıbın, ölçü çizgilerinin üstünden kayarak tekrar etmesidir. En yaygını: 4/4 içinde 3 sekizlik uzunluğunda bir motif. Kalıp her ölçüde farklı bir yerden başlar ama 3 ölçüde bir başa döner.
+> Anahtar: kalıp ne yaparsa yapsın 4/4 nabzını kaybetme. Önce sadece dokun, sonra nabzı ekranda tutarken kalıbı sesle söyle.
+g: tap p="D..D..D.|.D..D..D|..D..D.." bpm=60 tol=190 title="3 sekizlikte bir dokun (3 ölçüde başa döner)"
+g: strum p="D..D..D.|.D..D..D|..D..D.." bpm=60 title="Aynı kalıbı susturulmuş tellerle"
+g: strum p="D..D..D.|.D..D..D|..D..D.." bpm=55 pulse=1 tol=200 title="Ekranda 4/4 nabzı tut, 3'lü kalıbı “ta” diye söyle"
+## c01b | 3+3+2 (tresillo)
+> 8 sekizliği 3+3+2 diye gruplamak: Latin müziğinden funk ve rock'a her yerde. Aynı uzunluk (bir ölçü) farklı bölünür; vurgu 1'de, 2'nin "ve"sinde ve 4'te.
+> Önce "1-2-3 1-2-3 1-2" diye say, sonra vurgulu yerlerde çal.
+g: tap p="D..D..D." bpm=65 bars=2 title="3+3+2: dokun"
+g: strum p="D..D..D." bpm=70 bars=2
+g: strum p="D..D..D." bpm=60 bars=2 pulse=1 tol=200 title="Nabzı tut + 3+3+2'yi söyle"
+g: tap p="D..D..D..D..D.D." grid=16 bpm=55 bars=2 title="16'lıkta 3+3+3+3+2+2"
+g: tap p="D.D.D.D." bpm=70 bars=4 gap=2-3 title="Kalıplardan sonra: nabız hâlâ yerinde mi? (2 ölçü sessizlik)"
+## c01c | Gitarda çapraz gruplar
+> Aynı fikir notalarla: 3 notalık bir motifi 4/4'te sekizliklerle tekrar et. Vurgu her seferinde başka vuruşa düşer; bu, solo cümlelerini "kayan" ve heyecanlı yapar. Sonra pentatonikte 5'li gruplar.
+g: seq bpm=60 tab="5:0/e 4:2/e 3:2/e 5:0/e 4:2/e 3:2/e 5:0/e 4:2/e 3:2/e 5:0/e 4:2/e 3:2/e 5:0/e 4:2/e 3:2/e 5:0/e" title="3 notalık motif, 4/4 sekizlikler"
+g: seq bpm=55 tab="1:8/s 1:5/s 2:8/s 2:5/s 3:7/s 1:8/s 1:5/s 2:8/s 2:5/s 3:7/s 1:8/s 1:5/s 2:8/s 2:5/s 3:7/s 3:5/s" title="Pentatonikte 5'li gruplar, 16'lıklar"
+g: seq bpm=60 tab="3:7/t 2:5/t 2:8/t 3:7/t 2:5/t 2:8/t 3:7/t 2:5/t 2:8/t 3:7/t 2:5/t 2:8/t" title="Triolelerle 3'lü motif"
 
 # u22 | Teknik ve Hız | Tempo merdiveni, pena teknikleri, legato, tapping
 ## u22a | Alternatif pena ve tempo merdiveni
@@ -692,6 +808,8 @@ g: changes ch=G,C,Cm,G bpm=60 beats=4 rep=1
 q: G7 akorunun tritone ikamesi? | Db7 | D7 | C#m7 | F7
 g: chordspell types=7 roots=G,Db,D,Ab n=2
 g: changes ch=Dm7,G7,Cmaj7,Cmaj7 bpm=60 beats=4 rep=1
+g: chordfunc set=I,IV,V,bVII,bVI,iv n=4
+g: chordfunc set=I,ii,V,V/V,V/vi,vi n=4
 ## u23d | Ses yürütme
 > SES YÜRÜTME (voice leading): akor değişirken her sesi en yakın notaya hareket ettirmek. Ortak notaları tut, diğerlerini adım adım kaydır. 7'li akorlarda 7, sonraki akorun 3'üne yarım ses iner (G7'nin F'si → C'nin E'si).
 > Gitarda bu, sap boyunca zıplamak yerine yakın şekiller (çevrimler) seçmek demektir.

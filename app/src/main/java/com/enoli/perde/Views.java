@@ -321,6 +321,7 @@ public final class Views {
         public String rhythmText;
         public String centerText = "";
         public float gridPos = Float.NaN; // sayım sonrası vuruş (negatif = sayım sürüyor)
+        public boolean hideDots;          // metronom sustuğunda nabız noktaları gizlenir
         private final Paint p = paint(0);
         private final float d;
         public Beats(Context c) { super(c); d = c.getResources().getDisplayMetrics().density; }
@@ -329,7 +330,7 @@ public final class Views {
         @Override protected void onDraw(Canvas c) {
             float W = getWidth();
             float r = 11 * d;
-            int cur = beatPos < 0 ? -1 : ((int) Math.floor(beatPos)) % beatsPerBar;
+            int cur = beatPos < 0 || hideDots ? -1 : ((int) Math.floor(beatPos)) % beatsPerBar;
             for (int i = 0; i < beatsPerBar; i++) {
                 float x = W / 2 + (i - (beatsPerBar - 1) / 2f) * 36 * d;
                 p.setColor(i == cur ? (i == 0 ? Ui.ORANGE : Ui.BLUE) : Ui.SURFACE2);
@@ -510,6 +511,109 @@ public final class Views {
                 p.setColor(Ui.YELLOW);
                 c.drawText(sb.toString(), cx, cy + r + 22 * d, p);
             }
+        }
+    }
+
+
+    // ======================= RİTİM NOTASI (tek çizgi) =======================
+    public static class RhythmNotation extends View {
+        public static class Item {
+            public float beat, dur; public boolean rest, dotted, triplet; public String value; // w h q e s
+            public boolean barBefore;
+        }
+        public List<Item> items = new ArrayList<>();
+        public int[] state = new int[0];
+        public float cursorBeat = -99;
+        public int beatsPerBar = 4;
+        private final Paint p = paint(Ui.TEXT);
+        private final float d;
+        public RhythmNotation(Context c) { super(c); d = c.getResources().getDisplayMetrics().density; }
+        public void set(List<Item> it, int bpb) { items = it; beatsPerBar = bpb; state = new int[it.size()]; invalidate(); }
+        @Override protected void onMeasure(int w, int h) { setMeasuredDimension(MeasureSpec.getSize(w), (int) (120 * d)); }
+
+        @Override protected void onDraw(Canvas c) {
+            if (items.isEmpty()) return;
+            Item last = items.get(items.size() - 1);
+            float totalBeats = (float) Math.ceil((last.beat + last.dur) / beatsPerBar - 0.001) * beatsPerBar;
+            float W = getWidth(), left = 14 * d, right = W - 10 * d;
+            // en fazla 2 ölçü göster, imleçle kaydır
+            float perView = Math.min(totalBeats, beatsPerBar * 2);
+            float startBeat = 0;
+            if (cursorBeat > perView - 0.5f) startBeat = (float) Math.floor((cursorBeat) / beatsPerBar) * beatsPerBar - (perView > beatsPerBar ? beatsPerBar : 0);
+            startBeat = Math.max(0, Math.min(startBeat, totalBeats - perView));
+            float pxb = (right - left) / perView;
+            float y = 70 * d;
+            p.setStrokeWidth(1.5f * d); p.setColor(Ui.MUTED);
+            c.drawLine(left, y, right, y, p);
+            for (float b = 0; b <= totalBeats + 0.01f; b += beatsPerBar) {
+                float x = left + (b - startBeat) * pxb - 4 * d;
+                if (x < left - 1 || x > right + 1) continue;
+                c.drawLine(x, y - 22 * d, x, y + 22 * d, p);
+            }
+            // vuruş numaraları
+            p.setTextAlign(Paint.Align.CENTER); p.setTextSize(10 * d);
+            for (int b = (int) startBeat; b < startBeat + perView; b++) {
+                float x = left + (b - startBeat) * pxb + 8 * d;
+                c.drawText(String.valueOf(b % beatsPerBar + 1), x, y + 40 * d, p);
+            }
+            for (int i = 0; i < items.size(); i++) {
+                Item it = items.get(i);
+                if (it.beat < startBeat - 0.01f || it.beat >= startBeat + perView - 0.01f) continue;
+                float x = left + (it.beat - startBeat) * pxb + 8 * d;
+                int col = state.length > i && state[i] == 1 ? Ui.GREEN : state.length > i && state[i] == 2 ? Ui.RED : Ui.TEXT;
+                p.setColor(col);
+                p.setStrokeWidth(1.8f * d);
+                if (it.rest) { drawRest(c, it, x, y); continue; }
+                boolean open = it.value.equals("w") || it.value.equals("h");
+                p.setStyle(open ? Paint.Style.STROKE : Paint.Style.FILL);
+                c.save(); c.rotate(-20, x, y);
+                c.drawOval(new RectF(x - 6 * d, y - 4.5f * d, x + 6 * d, y + 4.5f * d), p);
+                c.restore();
+                p.setStyle(Paint.Style.FILL);
+                if (!it.value.equals("w")) c.drawLine(x + 5.5f * d, y, x + 5.5f * d, y - 30 * d, p);
+                int flags = it.value.equals("e") ? 1 : it.value.equals("s") ? 2 : 0;
+                // komşu kısa notalarla kiriş (aynı vuruş içinde)
+                Item nx = i + 1 < items.size() ? items.get(i + 1) : null;
+                boolean beamNext = flags > 0 && nx != null && !nx.rest && (nx.value.equals("e") || nx.value.equals("s")) && Math.floor(nx.beat + 0.001) == Math.floor(it.beat + 0.001) && nx.beat < startBeat + perView;
+                Item pv = i > 0 ? items.get(i - 1) : null;
+                boolean beamPrev = flags > 0 && pv != null && !pv.rest && (pv.value.equals("e") || pv.value.equals("s")) && Math.floor(pv.beat + 0.001) == Math.floor(it.beat + 0.001);
+                if (beamNext) {
+                    float nxX = left + (nx.beat - startBeat) * pxb + 8 * d;
+                    int nf = nx.value.equals("s") ? 2 : 1;
+                    for (int k = 0; k < Math.min(flags, nf); k++) c.drawRect(x + 5.5f * d - 1, y - 30 * d + k * 5 * d, nxX + 5.5f * d + 1, y - 27 * d + k * 5 * d, p);
+                } else if (!beamPrev) {
+                    for (int k = 0; k < flags; k++) c.drawLine(x + 5.5f * d, y - 30 * d + k * 6 * d, x + 12 * d, y - 22 * d + k * 6 * d, p);
+                }
+                if (it.dotted) c.drawCircle(x + 11 * d, y - 1 * d, 2 * d, p);
+                if (it.triplet && (pv == null || !pv.triplet || Math.floor(pv.beat + 0.001) != Math.floor(it.beat + 0.001))) {
+                    p.setTextSize(11 * d); c.drawText("3", x + 14 * d, y - 36 * d, p);
+                }
+            }
+            if (cursorBeat >= startBeat && cursorBeat <= startBeat + perView) {
+                float x = left + (cursorBeat - startBeat) * pxb + 8 * d;
+                p.setColor(0x881CB0F6); p.setStrokeWidth(3 * d);
+                c.drawLine(x, y - 38 * d, x, y + 24 * d, p);
+            }
+        }
+
+        private void drawRest(Canvas c, Item it, float x, float y) {
+            switch (it.value) {
+                case "w": c.drawRect(x - 6 * d, y - 8 * d, x + 6 * d, y - 3 * d, p); break;
+                case "h": c.drawRect(x - 6 * d, y - 4 * d, x + 6 * d, y + 1 * d, p); break;
+                case "q": {
+                    Path z = new Path();
+                    z.moveTo(x - 2 * d, y - 14 * d); z.lineTo(x + 4 * d, y - 6 * d); z.lineTo(x - 2 * d, y + 1 * d);
+                    z.lineTo(x + 4 * d, y + 8 * d); z.quadTo(x - 5 * d, y + 4 * d, x + 1 * d, y + 13 * d);
+                    p.setStyle(Paint.Style.STROKE); c.drawPath(z, p); p.setStyle(Paint.Style.FILL); break;
+                }
+                default: {
+                    c.drawCircle(x - 2 * d, y - 6 * d, 2.5f * d, p);
+                    c.drawLine(x - 2 * d, y - 5 * d, x + 4 * d, y - 7 * d, p);
+                    c.drawLine(x + 4 * d, y - 7 * d, x, y + 8 * d, p);
+                    if (it.value.equals("s")) c.drawCircle(x - 3 * d, y + 1 * d, 2.5f * d, p);
+                }
+            }
+            if (it.dotted) c.drawCircle(x + 9 * d, y - 3 * d, 2 * d, p);
         }
     }
 

@@ -149,6 +149,11 @@ public class AudioOut {
 
         public boolean isAnchored() { return anchored; }
 
+        private volatile double muteFrom = -1, muteTo = -1;
+        /** [from, to) vuruş aralığında tık sesi çıkmaz (nabzı içselleştirme). Vuruşlar sayım dahil 0'dan sayılır. */
+        public void setMute(double fromBeat, double toBeat) { muteFrom = fromBeat; muteTo = toBeat; }
+        public boolean isMuted(double beat) { return beat >= muteFrom && beat < muteTo; }
+
         private void loop() {
             int block = 256;
             short[] buf = new short[block];
@@ -163,7 +168,7 @@ public class AudioOut {
                     if (f >= 0 && audible) {
                         long beat = f / framesPerBeat, inBeat = f % framesPerBeat;
                         float[] w = (beat % beatsPerBar == 0) ? hi : lo;
-                        if (inBeat < w.length) v = w[(int) inBeat];
+                        if (inBeat < w.length && !isMuted(beat)) v = w[(int) inBeat];
                     }
                     buf[i] = (short) (v * 20000);
                 }

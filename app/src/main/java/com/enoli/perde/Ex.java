@@ -8,7 +8,7 @@ public class Ex implements Cloneable {
     /** Isınma sürümleri için yüzeysel kopya. */
     public Ex copy() { try { return (Ex) super.clone(); } catch (CloneNotSupportedException e) { throw new RuntimeException(e); } }
 
-    public enum Type { INFO, CHOICE, FRET_TAP, PLAY_NOTES, PLAY_SEQ, PLAY_CHORD, CHANGES, RHYTHM, IMPROV, TUNE, BEND, CALIBRATE }
+    public enum Type { INFO, CHOICE, FRET_TAP, PLAY_NOTES, PLAY_SEQ, PLAY_CHORD, CHANGES, RHYTHM, IMPROV, TUNE, BEND, CALIBRATE, SING }
 
     public Type type;
     public String title = "";
@@ -56,6 +56,13 @@ public class Ex implements Cloneable {
     public boolean tapMode;       // gitar yerine ekrana dokun
     public int freeCount;         // >0: metronomsuz, serbest vuruş sayısı (mikrofon testi)
     public float tolMs;           // >0: bu görev için özel zamanlama toleransı
+    public boolean voice;         // ritmi sesle ("ta") söyle / notayı sesle söyle
+    public boolean pulseTap;      // iki parçalı: ekranda nabız + sesle ritim
+    public int gapFromBar, gapToBar; // metronomun sustuğu ölçüler (1'den başlar)
+    public float[] hitBeats;      // ritim okuma: vuruş konumları
+    public int[] hitDisp;         // her vuruşun notasyondaki öğe indeksi
+    public List<Views.RhythmNotation.Item> notation; // nota yazısı
+    public String singLabel;      // SING: hedefin adı (ör. "Sol (5)")
 
     // IMPROV
     public int[] allowedPcs;

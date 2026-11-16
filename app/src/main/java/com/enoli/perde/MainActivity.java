@@ -214,7 +214,7 @@ public class MainActivity extends Activity {
     private String glyphFor(Curriculum.Lesson l) {
         boolean mic = false, theory = false;
         for (String s : l.specs) {
-            if (s.matches("g: (open|playnote|seq|spider|scale|arp|chord|changes|strum|improv|earback|bend|octave|ivalplay|staffplay|tune|calibrate).*")) mic = true;
+            if (s.matches("g: (open|playnote|seq|spider|scale|arp|chord|changes|strum|tap|read|sing|freestrum|improv|earback|bend|octave|ivalplay|staffplay|tune|calibrate).*")) mic = true;
             else theory = true;
         }
         return mic && theory ? "🎸" : mic ? "🎤" : "📖";
@@ -224,7 +224,7 @@ public class MainActivity extends Activity {
         AlertDialog.Builder b = new AlertDialog.Builder(this);
         b.setTitle(l.title);
         int micCount = 0;
-        for (String s : l.specs) if (!s.startsWith("q:") && !s.matches("g: (alpha|semi|fretname|fretfind|staffname|ival|ivalear|scalespell|degree|chordspell|chordear|chordid|diatonic|keysig|relative|mode|rhythmval|progear).*")) micCount++;
+        for (String s : l.specs) if (!s.startsWith("q:") && !s.matches("g: (alpha|semi|fretname|fretfind|staffname|ival|ivalear|scalespell|degree|chordspell|chordear|chordid|diatonic|keysig|relative|mode|rhythmval|progear|degreeear|chordfunc|tap).*")) micCount++;
         String msg = "Ünite " + (l.unit.index + 1) + ": " + l.unit.title + "\n\n" + l.cards.size() + " bilgi kartı, " + l.specs.size() + " görev grubu" + (micCount > 0 ? " (" + micCount + " tanesi gitarla, mikrofonla)" : "");
         if (prog.isDone(l.id)) msg += "\n\nEn iyi: " + "★★★".substring(0, prog.stars.get(l.id)) + "  — tekrar oynayarak yıldızlarını artırabilirsin.";
         if (!unlocked) msg += "\n\n🔒 Önce önceki dersi bitir ya da ünite sınavıyla atla.";

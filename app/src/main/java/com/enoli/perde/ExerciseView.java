@@ -77,6 +77,7 @@ public class ExerciseView extends LinearLayout {
             case TUNE: buildTune(); break;
             case BEND: buildBend(); break;
             case CALIBRATE: buildCalibrate(); break;
+            case SING: buildSing(); break;
         }
     }
 
@@ -109,10 +110,12 @@ public class ExerciseView extends LinearLayout {
         h.postDelayed(this::playPromptAudio, 350);
     }
 
+    private long audioEndsAt;
+
     private void playPromptAudio() {
+        List<AudioOut.Ev> evs = new ArrayList<>();
+        float t = 0;
         if (ex.audioChords != null) {
-            List<AudioOut.Ev> evs = new ArrayList<>();
-            float t = 0;
             for (String ch : ex.audioChords) {
                 int[] pcs = Theory.chordPcs(ch);
                 int root = 48 + pcs[0];
@@ -125,12 +128,20 @@ public class ExerciseView extends LinearLayout {
                 }
                 t += 1.2f;
             }
-            AudioOut.play(AudioOut.render(evs));
-        } else if (ex.audioHarmonic) {
-            AudioOut.playChord(ex.audio, true);
-        } else {
-            AudioOut.playNotes(ex.audio);
         }
+        if (ex.audio != null) {
+            if (ex.audioHarmonic) {
+                for (int i = 0; i < ex.audio.length; i++) evs.add(new AudioOut.Ev(ex.audio[i], t + i * 0.03f, 1.6f));
+                t += 1.8f;
+            } else {
+                if (ex.audioChords != null) t += 0.4f;
+                for (int i = 0; i < ex.audio.length; i++) evs.add(new AudioOut.Ev(ex.audio[i], t + i * 0.55f, 0.5f));
+                t += ex.audio.length * 0.55f;
+            }
+        }
+        if (evs.isEmpty()) return;
+        AudioOut.play(AudioOut.render(evs));
+        audioEndsAt = System.nanoTime() + (long) ((t + 0.6f) * 1e9);
     }
 
     private void addVisuals() {
@@ -652,81 +663,130 @@ public class ExerciseView extends LinearLayout {
     }
 
     // ------------------------------------------------------------------ RİTİM
-    private long[] RT;
-    private boolean[] rHit;
-    private int[] rIdx;
-    private long rWin, lastOnsetMatched;
+    /** Bir ritim izi: beklenen vuruşlar (vuruş cinsinden) ve durumları. */
+    private final class Track {
+        double[] beat; boolean[] hit; int[] disp; long win, lat, lastMatched; boolean tap; String who;
+        long at(int i) { return met.beatNanos(countIn + beat[i]) + lat; }
+    }
 
+    private Track main, pulse;     // main: kalıp (mikrofon ya da dokunma); pulse: iki parçalı egzersizde dokunulan nabız
     private int onsetsHeard;
+    private Views.RhythmNotation notation;
+
+    private Track makeTrack(List<Double> bs, List<Integer> disp, boolean tap, float tolMs, double minGapBeats) {
+        Track t = new Track();
+        t.beat = new double[bs.size()]; t.hit = new boolean[bs.size()]; t.disp = new int[bs.size()];
+        for (int i = 0; i < t.beat.length; i++) { t.beat[i] = bs.get(i); t.disp[i] = disp.get(i); }
+        t.tap = tap;
+        t.lat = tap ? 0 : latencyNs();
+        double gapMs = minGapBeats * 60000 / effectiveBpm();
+        t.win = (long) (Math.min(tolMs, gapMs * 0.45) * 1e6);
+        return t;
+    }
+
+    private void markDisp(Track t, int i, int st) {
+        if (t == pulse) return;
+        if (notation != null) { if (t.disp[i] < notation.state.length) notation.state[t.disp[i]] = st; notation.invalidate(); }
+        else if (beats != null && beats.gridState != null) { beats.gridState[t.disp[i]] = st; beats.invalidate(); }
+    }
 
     private void buildRhythm() {
         if (ex.freeCount > 0) { buildFreeStrum(); return; }
-        if (ex.strumChord != null && !ex.tapMode) {
+        if (ex.strumChord != null && !ex.tapMode && !ex.voice) {
             Views.Chord cv = new Views.Chord(ctx);
             cv.shape = Theory.shapeFor(ex.strumChord); cv.name = ex.strumChord;
             addView(cv);
         }
         beats = new Views.Beats(ctx);
         beats.beatsPerBar = ex.beatsPerBar;
-        beats.grid = ex.hits;
-        beats.stepsPerBar = ex.grid;
-        beats.rhythmText = ex.rhythmText;
-        beats.gridState = new int[ex.hits.length];
+        if (ex.notation == null) {
+            beats.grid = ex.hits;
+            beats.stepsPerBar = ex.grid;
+            beats.rhythmText = ex.rhythmText;
+            beats.gridState = new int[ex.hits.length];
+        }
         beats.centerText = Math.round(effectiveBpm()) + " BPM";
         addView(beats);
-        addView(Ui.text(ctx, ex.tapMode ? "↓ olan yerlerde dokun, • olan yerlerde dokunma." : "↓ aşağı vuruş, ↑ yukarı vuruş, • sus (çalma ama el sallanmaya devam etsin)", 13, Ui.MUTED, false));
-        addStatus(ex.tapMode ? "Başla'ya bas; metronom 1 ölçü sayacak, sonra dokunmaya başla." : "Hazır olunca Başla. Metronom önce 1 ölçü sayar.");
+        if (ex.notation != null) {
+            notation = new Views.RhythmNotation(ctx);
+            notation.set(ex.notation, ex.beatsPerBar);
+            addView(notation);
+        }
+        String how;
+        if (ex.pulseTap) how = "Sol elinle (ya da başparmağınla) her vuruşta DOKUN düğmesine bas; aynı anda ritmi “ta” diye sesle söyle.";
+        else if (ex.voice) how = "Ritmi “ta” hecesiyle, kısa ve net söyle. Sus olan yerde sessiz kal.";
+        else if (ex.tapMode) how = ex.notation != null ? "Notaların başladığı anlarda dokun, suslarda dokunma." : "↓ olan yerlerde dokun, • olan yerlerde dokunma.";
+        else how = ex.notation != null ? "Notaların başladığı anlarda telleri susturup vur; suslarda vurma." : "↓ aşağı vuruş, ↑ yukarı vuruş, • sus (çalma ama el sallanmaya devam etsin)";
+        if (ex.gapFromBar > 0) how += "\n🤫 " + ex.gapFromBar + (ex.gapToBar > ex.gapFromBar ? "–" + ex.gapToBar : "") + ". ölçüde metronom susacak: nabzı içinden sürdür!";
+        addView(Ui.text(ctx, how, 14, Ui.MUTED, false));
+        addStatus("Başla'ya bas. Metronom önce sayacak.");
+        boolean needPad = ex.tapMode || ex.pulseTap;
+        boolean needMic = !ex.tapMode;
         Button pad = null;
-        if (ex.tapMode) {
-            pad = Ui.button(ctx, "👆  DOKUN", Ui.PURPLE, Ui.darker(Ui.PURPLE, 0.7f));
+        if (needPad) {
+            pad = Ui.button(ctx, ex.pulseTap ? "👆  NABIZ" : "👆  DOKUN", Ui.PURPLE, Ui.darker(Ui.PURPLE, 0.7f));
             pad.setTextSize(24);
             pad.setEnabled(false);
             final Button fpad = pad;
             pad.setOnTouchListener((v, e) -> {
-                if (e.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                if (e.getAction() == android.view.MotionEvent.ACTION_DOWN && fpad.isEnabled()) {
                     long ago = (android.os.SystemClock.uptimeMillis() - e.getEventTime()) * 1_000_000L;
-                    rhythmOnset(System.nanoTime() - ago);
+                    onTrackEvent(ex.pulseTap ? pulse : main, System.nanoTime() - ago);
                     fpad.animate().scaleX(0.92f).scaleY(0.92f).setDuration(50).withEndAction(() -> fpad.animate().scaleX(1).scaleY(1).setDuration(120).start()).start();
                 }
                 return true;
             });
-            addView(pad, new LinearLayout.LayoutParams(Ui.MATCH, dp(150)));
+            addView(pad, new LinearLayout.LayoutParams(Ui.MATCH, dp(ex.pulseTap ? 110 : 150)));
         }
         final Button fpad2 = pad;
         Runnable go = () -> {
             startMetronome(effectiveBpm());
+            if (ex.gapFromBar > 0) {
+                int to = Math.max(ex.gapFromBar, ex.gapToBar);
+                met.setMute(countIn + (ex.gapFromBar - 1) * ex.beatsPerBar, countIn + to * ex.beatsPerBar);
+            }
             onsetsHeard = 0;
             List<Double> bs = new ArrayList<>();
             List<Integer> idx = new ArrayList<>();
-            double stepBeats = (double) ex.beatsPerBar / ex.grid;
-            // dokunmada mikrofon gecikmesi yok: hedef, tıkın hoparlörden çıktığı an
-            rLat = ex.tapMode ? 0 : latencyNs();
-            for (int i = 0; i < ex.hits.length; i++) if (ex.hits[i]) { bs.add(i * stepBeats); idx.add(i); }
-            rBeat = new double[bs.size()]; RT = new long[bs.size()]; rIdx = new int[bs.size()]; rHit = new boolean[bs.size()];
-            for (int i = 0; i < rBeat.length; i++) { rBeat[i] = bs.get(i); rIdx[i] = idx.get(i); }
-            double stepMs = stepBeats * 60000 / effectiveBpm();
-            float tol = Math.max(ex.tolMs, ex.tapMode ? Math.max(150, windowMs()) : windowMs());
-            rWin = (long) (Math.min(tol, stepMs * 0.45) * 1e6);
-            lastOnsetMatched = 0;
-            if (fpad2 != null) { fpad2.setEnabled(true); if (mascot != null) mascot.setMood(Art.Mascot.Mood.LISTEN); }
-            else {
-                AudioIn in = host.audio();
+            double minGap;
+            if (ex.hitBeats != null) {
+                for (int i = 0; i < ex.hitBeats.length; i++) { bs.add((double) ex.hitBeats[i]); idx.add(ex.hitDisp[i]); }
+                minGap = 4;
+                for (int i = 1; i < ex.hitBeats.length; i++) minGap = Math.min(minGap, ex.hitBeats[i] - ex.hitBeats[i - 1]);
+            } else {
+                double stepBeats = (double) ex.beatsPerBar / ex.grid;
+                for (int i = 0; i < ex.hits.length; i++) if (ex.hits[i]) { bs.add(i * stepBeats); idx.add(i); }
+                minGap = stepBeats;
+            }
+            float tol = windowMs();
+            if (ex.tapMode) tol = Math.max(tol, 150);
+            if (ex.voice) tol = Math.max(tol, 160);
+            main = makeTrack(bs, idx, ex.tapMode, tol, minGap);
+            pulse = null;
+            if (ex.pulseTap) {
+                List<Double> pb = new ArrayList<>(); List<Integer> pi = new ArrayList<>();
+                int total = (int) Math.ceil(bs.isEmpty() ? ex.beatsPerBar : (bs.get(bs.size() - 1) + 0.01) / ex.beatsPerBar) * ex.beatsPerBar;
+                for (int b = 0; b < total; b++) { pb.add((double) b); pi.add(b); }
+                pulse = makeTrack(pb, pi, true, Math.max(tol, 170), 1);
+            }
+            if (fpad2 != null) fpad2.setEnabled(true);
+            if (mascot != null) mascot.setMood(Art.Mascot.Mood.LISTEN);
+            if (needMic) {
                 listen(new AudioIn.Listener() {
                     public void onFrame(long n, float m, float c, float db) {}
                     public void onNote(long n, float m, boolean a) {}
-                    public void onOnset(long t, float db) { onsetsHeard++; flashHeard(); rhythmOnset(t); }
+                    public void onOnset(long t, float db) { onsetsHeard++; flashHeard(); onTrackEvent(main, t); }
                 });
             }
             tickRhythm();
         };
-        if (ex.tapMode) {
-            startBtn = Ui.primary(ctx, "▶  Başla");
-            startBtn.setOnClickListener(v -> { startBtn.setEnabled(false); startBtn.setAlpha(0.4f); go.run(); });
-            addView(startBtn, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 8, 0));
-        } else {
-            addStartButton(go);
-            addSkipMic();
-        }
+        startBtn = Ui.primary(ctx, "▶  Başla");
+        startBtn.setOnClickListener(v -> {
+            startBtn.setEnabled(false); startBtn.setAlpha(0.4f);
+            if (needMic) host.withMic(go); else go.run();
+        });
+        addView(startBtn, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 8, 0));
+        if (needMic) addSkipMic();
     }
 
     private void flashHeard() {
@@ -766,32 +826,45 @@ public class ExerciseView extends LinearLayout {
         addSkipMic();
     }
 
-    private double[] rBeat;
-    private long rLat;
-
-    private long rtAt(int i) { return met.beatNanos(countIn + rBeat[i]) + rLat; }
-
-    private void rhythmOnset(long t) {
-        if (!running || rBeat == null) return;
-        if (t < rtAt(0) - 2 * rWin) return;
+    private void onTrackEvent(Track tr, long t) {
+        if (!running || tr == null || finished) return;
+        if (t < tr.at(0) - 2 * tr.win) return; // sayım sırasında yok say
         int best = -1; long bd = Long.MAX_VALUE;
-        for (int i = 0; i < rBeat.length; i++) { if (rHit[i]) continue; long dd = Math.abs(t - rtAt(i)); if (dd < bd) { bd = dd; best = i; } }
-        if (best >= 0 && bd <= rWin) {
-            rHit[best] = true; lastOnsetMatched = t;
-            beats.gridState[rIdx[best]] = 1; beats.invalidate();
-            if (mascot != null && ex.tapMode) mascot.pop();
+        for (int i = 0; i < tr.beat.length; i++) { if (tr.hit[i]) continue; long dd = Math.abs(t - tr.at(i)); if (dd < bd) { bd = dd; best = i; } }
+        if (best >= 0 && bd <= tr.win) {
+            tr.hit[best] = true; tr.lastMatched = t;
+            markDisp(tr, best, 1);
+            if (mascot != null && tr.tap) mascot.pop();
             return;
         }
-        if (t - lastOnsetMatched < 100_000_000L) return;
+        if (t - tr.lastMatched < 100_000_000L) return; // aynı vuruşun ikinci algısı
+        String who = tr == pulse ? "Nabız: " : "";
         String msg;
         if (best >= 0) {
-            long d = t - rtAt(best);
-            msg = d < 0 ? "Biraz erken (" + Math.round(-d / 1e6) + " ms)" : "Biraz geç (" + Math.round(d / 1e6) + " ms)";
-        } else msg = "Fazladan vuruş";
-        lastOnsetMatched = t;
-        if (forgive(msg)) return;
-        if (best >= 0) { beats.gridState[rIdx[best]] = 2; beats.invalidate(); }
-        done(false, msg + (ex.tapMode ? "" : " ya da sus yerinde çaldın"));
+            long d = t - tr.at(best);
+            msg = who + (d < 0 ? "Biraz erken (" + Math.round(-d / 1e6) + " ms)" : "Biraz geç (" + Math.round(d / 1e6) + " ms)");
+        } else msg = who + "Fazladan vuruş";
+        tr.lastMatched = t;
+        if (best >= 0) markDisp(tr, best, 2);
+        done(false, msg + (tr.tap ? "" : ex.voice ? " ya da sus yerinde ses çıkardın" : " ya da sus yerinde çaldın"));
+    }
+
+    private boolean checkMisses(Track tr, long now) {
+        if (tr == null) return true;
+        boolean all = true;
+        for (int i = 0; i < tr.beat.length; i++) {
+            if (tr.hit[i]) continue;
+            all = false;
+            if (now > tr.at(i) + tr.win + (tr.tap ? 150_000_000L : 400_000_000L)) {
+                markDisp(tr, i, 2);
+                if (!tr.tap && onsetsHeard == 0) {
+                    done(false, ex.voice ? "Mikrofon sesini duymadı. “Ta” hecesini daha yüksek ve kısa söyle, telefonu yaklaştır."
+                            : "Mikrofon hiç vuruş duymadı. Telefonu gitara yaklaştır, daha güçlü vur ya da Profil → Ayarlar → Mikrofon eşiğini düşür.");
+                } else done(false, (tr == pulse ? "Nabzı kaçırdın: " : "Bir vuruşu kaçırdın: ") + (i + 1) + ". vuruş");
+                return false;
+            }
+        }
+        return all;
     }
 
     private void tickRhythm() {
@@ -800,25 +873,18 @@ public class ExerciseView extends LinearLayout {
         double beat = (now - met.beatNanos(countIn)) / (60e9 / effectiveBpm());
         beats.beatPos = (float) (beat + countIn);
         beats.gridPos = (float) beat;
-        beats.centerText = beat < 0 ? "Hazırlan… " + (int) Math.ceil(-beat) : Math.round(effectiveBpm()) + " BPM";
+        boolean silent = met.isMuted(beat + countIn);
+        beats.hideDots = silent;
+        beats.centerText = beat < 0 ? "Hazırlan… " + (int) Math.ceil(-beat) : silent ? "🤫 içinden say!" : Math.round(effectiveBpm()) + " BPM";
         beats.invalidate();
-        boolean all = true;
-        for (int i = 0; i < rBeat.length; i++) {
-            if (!rHit[i]) {
-                all = false;
-                if (now > rtAt(i) + rWin + (ex.tapMode ? 150_000_000L : 400_000_000L)) {
-                    beats.gridState[rIdx[i]] = 2; beats.invalidate();
-                    rHit[i] = true; // bu vuruş kapandı
-                    if (!ex.tapMode && onsetsHeard == 0 && misses >= allowedMisses()) {
-                        done(false, "Mikrofon hiç vuruş duymadı. Telefonu gitara yaklaştır, daha güçlü vur ya da Profil → Ayarlar → Mikrofon eşiğini düşür.");
-                        return;
-                    }
-                    String msg = "Bir vuruşu kaçırdın";
-                    if (!forgive(msg)) { done(false, msg + ": " + (i + 1) + ". vuruş"); return; }
-                }
-            }
-        }
-        if (all && now > rtAt(rBeat.length - 1) + rWin + 200_000_000L) { done(true, passMsg("Ritim tam oturdu!")); return; }
+        if (notation != null) { notation.cursorBeat = (float) beat; notation.invalidate(); }
+        boolean a = checkMisses(main, now);
+        if (finished) return;
+        boolean b = checkMisses(pulse, now);
+        if (finished) return;
+        long lastT = main.beat.length > 0 ? main.at(main.beat.length - 1) : now;
+        if (pulse != null && pulse.beat.length > 0) lastT = Math.max(lastT, pulse.at(pulse.beat.length - 1));
+        if (a && b && now > lastT + main.win + 200_000_000L) { done(true, passMsg(ex.gapFromBar > 0 ? "Nabzı içinde taşıyorsun!" : "Ritim tam oturdu!")); return; }
         h.postDelayed(this::tickRhythm, 16);
     }
 
@@ -867,6 +933,59 @@ public class ExerciseView extends LinearLayout {
             return;
         }
         h.postDelayed(this::tickImprov, 16);
+    }
+
+    // ------------------------------------------------------------------ SESLE SÖYLEME
+    private void buildSing() {
+        addAudioButton();
+        meter = new Views.Meter(ctx);
+        meter.big = ex.hideTarget ? "♪" : (ex.singLabel != null ? ex.singLabel.split(" ")[0] : "♪");
+        meter.small = "Sesini bekliyorum";
+        addView(meter);
+        addStatus("🎤 Dinle, sonra söyle. Hangi oktavda söylediğin önemli değil.");
+        addView(Ui.text(ctx, "İpucu: “laa” ya da notanın adıyla, düz ve uzun söyle. İbre ortaya gelince 0,3 saniye tut.", 13, Ui.MUTED, false));
+        next = 0;
+        final int[] good = {0}, wrong = {0}, wrongPc = {-1};
+        final long[] noteStart = {System.nanoTime()};
+        listen(new AudioIn.Listener() {
+            public void onNote(long n, float m, boolean a) {}
+            public void onOnset(long n, float db) {}
+            public void onFrame(long n, float midi, float c, float db) {
+                long now = System.nanoTime();
+                if (now < audioEndsAt) { noteStart[0] = now; return; } // kendi çaldığımız sesi duymayalım
+                if (now - noteStart[0] > 15_000_000_000L) { done(false, "Ses duyulmadı ya da hedefe ulaşılamadı. Telefonu ağzına yaklaştır ve daha uzun söyle."); return; }
+                if (midi < 0) { good[0] = 0; return; }
+                int target = ex.notes.get(next).midi;
+                float diff = midi - target;
+                diff -= 12 * Math.round(diff / 12f);
+                meter.active = true;
+                meter.cents = diff * 100;
+                meter.small = (Math.abs(diff) < 0.3f ? "✓ tut!" : diff < 0 ? "↑ biraz daha ince söyle" : "↓ biraz daha kalın söyle") + "   (" + (next + 1) + "/" + ex.notes.size() + ")";
+                meter.invalidate();
+                showHeard(midi);
+                if (Math.abs(diff) < 0.45f) {
+                    wrong[0] = 0;
+                    if (++good[0] >= 12) {
+                        good[0] = 0;
+                        mascot.pop();
+                        if (staff != null) { staff.current = next + 1; staff.invalidate(); }
+                        next++;
+                        noteStart[0] = now;
+                        if (next >= ex.notes.size()) { done(true, "Tam isabet, kulağın ve sesin uyumlu!"); return; }
+                        status.setText("Doğru! Sıradaki nota…"); status.setTextColor(Ui.GREEN);
+                    }
+                } else {
+                    good[0] = 0;
+                    int pc = Theory.pc(Math.round(midi));
+                    if (Math.abs(diff) > 0.8f && pc == wrongPc[0]) wrong[0]++; else { wrong[0] = 0; wrongPc[0] = pc; }
+                    if (wrong[0] >= 30) {
+                        String want = ex.hideTarget ? "başka bir nota" : (ex.singLabel != null ? ex.singLabel : Theory.SHARP[Theory.pc(target)]);
+                        done(false, Theory.SHARP[pc] + " söylüyorsun, beklenen " + want + (ex.explain.isEmpty() ? "" : "\n" + ex.explain));
+                    }
+                }
+            }
+        });
+        addSkipMic();
     }
 
     // ------------------------------------------------------------------ AKORT
