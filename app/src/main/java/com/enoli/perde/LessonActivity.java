@@ -50,6 +50,7 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         getWindow().setNavigationBarColor(Ui.BG);
         cur = Curriculum.get(this);
         prog = Progress.get(this);
+        Sfx.enabled = prog.sfxOn;
         audio = new AudioIn();
         mode = getIntent().getStringExtra(MODE);
         id = getIntent().getStringExtra(ID);
@@ -122,7 +123,7 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
                 e.body = l.cards.get(i);
                 queue.add(e);
             }
-            for (String s : l.specs) queue.addAll(Gen.make(s, r));
+            for (String s : l.specs) for (Ex e : Gen.make(s, r)) addWithWarmups(e);
         } else if ("review".equals(mode)) {
             for (Progress.Card c : prog.dueCards(15)) {
                 List<Ex> l = Gen.make(c.key, r);
@@ -143,6 +144,25 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         if (System.currentTimeMillis() < skipMicUntil) dropMic();
         if ("calibrate".equals(mode) || "tuner".equals(mode)) calOffered = true;
         heartsView.setText("test".equals(mode) ? "♥ " + hearts : "");
+    }
+
+    /** Zamanlı görevlerden önce aynı görevin yavaş ve toleranslı hâllerini ekler (kademeli zorluk). */
+    private void addWithWarmups(Ex e) {
+        boolean timed = needsTiming(e) || e.tapMode;
+        if (timed && e.type != Ex.Type.IMPROV && e.bpm >= 50) {
+            float base = Math.max(prog.timingWindowMs, e.tolMs);
+            float[] f = prog.difficulty == 2 ? new float[0] : prog.difficulty == 1 ? new float[]{0.8f} : new float[]{0.7f, 0.85f};
+            float[] tolAdd = prog.difficulty == 1 ? new float[]{50} : new float[]{90, 45};
+            for (int i = 0; i < f.length; i++) {
+                Ex w = e.copy();
+                w.bpm = Math.max(40, Math.round(e.bpm * f[i]));
+                if (w.bpm >= e.bpm) continue;
+                w.tolMs = Math.min(280, base + tolAdd[i]);
+                w.title = "Isınma " + (i + 1) + "/" + f.length + " — " + Math.round(w.bpm) + " BPM";
+                queue.add(w);
+            }
+        }
+        queue.add(e);
     }
 
     private void dropMic() {
@@ -214,6 +234,12 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
                 doneCount++;
             } else {
                 queue.add(ex); // Duolingo usulü: yanlış soru sona eklenir
+                if (needsTiming(ex) || ex.tapMode) {
+                    float oldBpm = ex.bpm;
+                    ex.bpm = Math.max(40, ex.bpm - 6);
+                    ex.tolMs = Math.min(260, (ex.tolMs > 0 ? ex.tolMs : prog.timingWindowMs) + 35);
+                    if (ex.bpm < oldBpm) message = (message == null ? "" : message + "\n\n") + "Bir sonraki denemede kolaylaştırdım: " + Math.round(ex.bpm) + " BPM, daha geniş zamanlama.";
+                }
             }
         }
         showFeedback(pass, message, false);

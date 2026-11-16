@@ -204,7 +204,8 @@ public class AudioIn {
             if (totalSamples >= start + 2 * W) {
                 float[] x = ringSlice(start, 2 * W);
                 float[] p = Dsp.yin(x, 0, W, SR, 70, 1400, scratch);
-                if (p[0] > 0 && p[1] > 0.78f) {
+                boolean ringing = p[0] > 0 && noteActive && Math.abs(Dsp.hzToMidi(p[0]) - activeMidi) < 0.5f;
+                if (p[0] > 0 && p[1] > 0.78f && !(ringing && pendAttempt == 0)) {
                     float m = Dsp.hzToMidi(p[0]);
                     if (l != null) l.onNote(sampleToNanos(pendOnset), m, true);
                     noteActive = true; activeMidi = m; pendOnset = -1;

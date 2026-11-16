@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Tek bir alıştırma örneği (veri). Ekranı ExerciseView çizer. */
-public class Ex {
+public class Ex implements Cloneable {
+    /** Isınma sürümleri için yüzeysel kopya. */
+    public Ex copy() { try { return (Ex) super.clone(); } catch (CloneNotSupportedException e) { throw new RuntimeException(e); } }
+
     public enum Type { INFO, CHOICE, FRET_TAP, PLAY_NOTES, PLAY_SEQ, PLAY_CHORD, CHANGES, RHYTHM, IMPROV, TUNE, BEND, CALIBRATE }
 
     public Type type;

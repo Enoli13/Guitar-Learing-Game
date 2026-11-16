@@ -320,6 +320,7 @@ public final class Views {
         public int[] gridState;
         public String rhythmText;
         public String centerText = "";
+        public float gridPos = Float.NaN; // sayım sonrası vuruş (negatif = sayım sürüyor)
         private final Paint p = paint(0);
         private final float d;
         public Beats(Context c) { super(c); d = c.getResources().getDisplayMetrics().density; }
@@ -343,7 +344,8 @@ public final class Views {
             int total = grid.length;
             float top = 75 * d, cellW = Math.min(30 * d, (W - 20 * d) / Math.min(total, stepsPerBar * 2));
             int visible = Math.min(total, stepsPerBar * 2);
-            int curStep = beatPos < 0 ? -1 : (int) Math.floor(beatPos / beatsPerBar * stepsPerBar);
+            float gp = Float.isNaN(gridPos) ? beatPos : gridPos;
+            int curStep = gp < 0 ? -1 : (int) Math.floor(gp / beatsPerBar * stepsPerBar);
             int startStep = Math.max(0, Math.min(total - visible, (curStep / stepsPerBar) * stepsPerBar - (curStep >= stepsPerBar ? 0 : 0)));
             if (curStep >= stepsPerBar * 2) startStep = Math.min(total - visible, (curStep / stepsPerBar - 1) * stepsPerBar);
             float left = (W - visible * cellW) / 2;

@@ -97,6 +97,29 @@ public class Curriculum {
             }
         }
         flush(l, card);
+        addPracticeLessons();
+    }
+
+    /** Her ünitenin sonuna, o ünitenin çalma görevlerini bir arada tekrar ettiren bir pratik dersi ekler. */
+    private void addPracticeLessons() {
+        lessons.clear();
+        byId.clear();
+        for (Unit u : units) {
+            List<String> play = new ArrayList<>();
+            for (Lesson l : u.lessons) for (String sp : l.specs) {
+                if (sp.startsWith("g: ") && sp.matches("g: (seq|strum|tap|changes|spider|scale|arp|chord|playnote|open|bend|improv|ivalplay|octave|staffplay|earback).*")) play.add(sp);
+            }
+            if (play.size() >= 2) {
+                Lesson pr = new Lesson();
+                pr.id = u.id + "_pratik";
+                pr.title = "Ünite pratiği: " + u.title;
+                pr.unit = u;
+                pr.cards.add("Bu ünitede öğrendiğin tüm çalma görevlerini tek seferde tekrar ediyoruz. Kas hafızası tekrarla oluşur: aynı hareketi yavaş ve temiz yapmak, hızlı ve kirli yapmaktan her zaman daha değerlidir.");
+                pr.specs.addAll(play);
+                u.lessons.add(pr);
+            }
+            for (Lesson l : u.lessons) { l.globalIndex = lessons.size(); lessons.add(l); byId.put(l.id, l); }
+        }
     }
 
     private void flush(Lesson l, StringBuilder card) {

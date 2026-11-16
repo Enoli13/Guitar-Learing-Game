@@ -34,6 +34,7 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Ui.SURFACE);
         cur = Curriculum.get(this);
         prog = Progress.get(this);
+        Sfx.enabled = prog.sfxOn;
         LinearLayout root = Ui.vbox(this);
         root.setBackgroundColor(Ui.BG);
         topBar = Ui.hbox(this);
@@ -122,8 +123,11 @@ public class MainActivity extends Activity {
     }
 
     private boolean unlocked(Curriculum.Lesson l) {
-        if (l.globalIndex == 0) return true;
-        return prog.isDone(cur.lessons.get(l.globalIndex - 1).id) || prog.isDone(l.id);
+        if (l.globalIndex == 0 || prog.isDone(l.id)) return true;
+        // ünite pratiği dersleri yolu kilitlemez: bir önceki normal derse bak
+        int i = l.globalIndex - 1;
+        while (i > 0 && cur.lessons.get(i).id.endsWith("_pratik")) i--;
+        return prog.isDone(cur.lessons.get(i).id);
     }
 
     private View pathView() {
@@ -420,6 +424,20 @@ public class MainActivity extends Activity {
 
     private View settings() {
         LinearLayout c = Ui.card(this);
+        c.addView(Ui.text(this, "Zorluk", 16, Ui.TEXT, true));
+        c.addView(Ui.text(this, "Kolay: geniş zamanlama toleransı, uzun sayım ve görev başına 2 hata hakkı. Normal: hata anında görev biter. Zor: dar tolerans.", 13, Ui.MUTED, false));
+        LinearLayout diff = Ui.hbox(this);
+        String[] dn = {"Kolay", "Normal", "Zor"};
+        int[] dc = {Ui.GREEN, Ui.BLUE, Ui.RED};
+        for (int i = 0; i < 3; i++) {
+            final int k = i;
+            android.widget.Button b = prog.difficulty == i ? Ui.button(this, dn[i], dc[i], Ui.darker(dc[i], 0.7f)) : Ui.secondary(this, dn[i]);
+            b.setOnClickListener(v -> { prog.difficulty = k; prog.save(); render(); });
+            LinearLayout.LayoutParams lp = Ui.weight(1); lp.setMargins(Ui.dp(this, 3), Ui.dp(this, 6), Ui.dp(this, 3), Ui.dp(this, 10));
+            diff.addView(b, lp);
+        }
+        c.addView(diff);
+        c.addView(toggle("Ses efektleri (doğru/yanlış sesleri)", prog.sfxOn, v -> { prog.sfxOn = v; Sfx.enabled = v; }));
         c.addView(toggle("Metronom sesi", prog.metronomeAudible, v -> prog.metronomeAudible = v));
         c.addView(toggle("Katı oktav (oktav hatalarını kabul etme)", prog.strictOctave, v -> prog.strictOctave = v));
         c.addView(toggle("Günlük hatırlatma (" + String.format("%02d:%02d", prog.reminderHour, prog.reminderMinute) + ")", prog.reminderOn, v -> { prog.reminderOn = v; Reminder.schedule(this); }));

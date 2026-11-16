@@ -44,6 +44,7 @@ public class SongActivity extends Activity implements ExerciseView.Host {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().setStatusBarColor(Ui.BG);
         prog = Progress.get(this);
+        Sfx.enabled = prog.sfxOn;
         audio = new AudioIn();
         Curriculum cur = Curriculum.get(this);
         String sid = getIntent().getStringExtra("song");

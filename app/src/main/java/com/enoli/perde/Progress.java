@@ -39,6 +39,8 @@ public class Progress {
     public int reminderHour = 19, reminderMinute = 0;
     public boolean onboarded = false;
     public float timingWindowMs = 110;
+    public int difficulty = 0;      // 0 kolay, 1 normal, 2 zor
+    public boolean sfxOn = true;
 
     public static class Card {
         public String key;
@@ -222,7 +224,7 @@ public class Progress {
             o.put("latencyMs", latencyMs); o.put("calibrated", calibrated); o.put("micSensitivity", micSensitivity);
             o.put("metronomeAudible", metronomeAudible); o.put("strictOctave", strictOctave); o.put("reminderOn", reminderOn);
             o.put("reminderHour", reminderHour); o.put("reminderMinute", reminderMinute); o.put("onboarded", onboarded);
-            o.put("timingWindowMs", timingWindowMs);
+            o.put("timingWindowMs", timingWindowMs); o.put("difficulty", difficulty); o.put("sfxOn", sfxOn);
             JSONObject st = new JSONObject(); for (Map.Entry<String, Integer> e : stars.entrySet()) st.put(e.getKey(), e.getValue());
             o.put("stars", st);
             JSONArray ca = new JSONArray();
@@ -258,7 +260,7 @@ public class Progress {
             latencyMs = (float) o.optDouble("latencyMs", 0); calibrated = o.optBoolean("calibrated"); micSensitivity = (float) o.optDouble("micSensitivity", 0);
             metronomeAudible = o.optBoolean("metronomeAudible", true); strictOctave = o.optBoolean("strictOctave"); reminderOn = o.optBoolean("reminderOn", true);
             reminderHour = o.optInt("reminderHour", 19); reminderMinute = o.optInt("reminderMinute", 0); onboarded = o.optBoolean("onboarded");
-            timingWindowMs = (float) o.optDouble("timingWindowMs", 110);
+            timingWindowMs = (float) o.optDouble("timingWindowMs", 110); difficulty = o.optInt("difficulty", 0); sfxOn = o.optBoolean("sfxOn", true);
             JSONObject st = o.optJSONObject("stars");
             if (st != null) for (java.util.Iterator<String> it = st.keys(); it.hasNext(); ) { String k = it.next(); stars.put(k, st.getInt(k)); }
             JSONArray ca = o.optJSONArray("cards");

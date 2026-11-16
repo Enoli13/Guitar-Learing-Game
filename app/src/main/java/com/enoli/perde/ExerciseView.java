@@ -55,7 +55,7 @@ public class ExerciseView extends LinearLayout {
     public void bind(Ex e, Host host, float bpmBonus) {
         this.ex = e; this.host = host; this.bpmBonus = bpmBonus;
         removeAllViews();
-        finished = false; running = false;
+        finished = false; running = false; misses = 0; recentHits.clear(); lastHitMidi = -99;
         if (e.title != null && !e.title.isEmpty() && e.type != Ex.Type.INFO) addView(Ui.text(ctx, e.title, 14, Ui.MUTED, true));
         mascot = new Art.Mascot(ctx);
         if (e.type != Ex.Type.INFO) {
@@ -194,6 +194,10 @@ public class ExerciseView extends LinearLayout {
         return false;
     }
 
+    static boolean isLegato(Ex.Note n) {
+        return n.label != null && (n.label.startsWith("h") || n.label.startsWith("p") || n.label.startsWith("s") || n.label.startsWith("b"));
+    }
+
     private boolean matchesNote(Ex.Note exp, int got, boolean strict) {
         if (matches(exp.midi, got, strict)) return true;
         if (exp.alts != null) for (int a : exp.alts) if (matches(a, got, strict)) return true;
@@ -278,6 +282,21 @@ public class ExerciseView extends LinearLayout {
 
     // ------------------------------------------------------------------ BEKLEME MODU
     private int next;
+    private final java.util.ArrayDeque<long[]> recentHits = new java.util.ArrayDeque<>(); // {midi, zaman}
+
+    private void rememberHit(int midi, long t) {
+        recentHits.addLast(new long[]{midi, t});
+        while (recentHits.size() > 8) recentHits.removeFirst();
+    }
+
+    /** Bu perde son 3 saniyede çalınmış ve hâlâ titreşiyor olabilir mi? */
+    private boolean stillRinging(int m, long t) {
+        for (long[] r : recentHits) {
+            int d = Math.abs(m - (int) r[0]);
+            if ((d == 0 || d == 12 || d == 19 || d == 24) && t - r[1] < 3_000_000_000L) return true;
+        }
+        return false;
+    }
     private int lastHitMidi = -99;
     private long lastHitT;
 
@@ -296,12 +315,15 @@ public class ExerciseView extends LinearLayout {
             public void onNote(long t, float midi, boolean attack) {
                 int m = Math.round(midi);
                 Ex.Note exp = ex.notes.get(next);
+                // önceki telin titreşimi / el değmesi gibi vuruşsuz perde değişimlerini yok say (legato hariç)
+                if (!attack && !isLegato(exp)) return;
                 if (matchesNote(exp, m, ex.strictOctave)) {
                     markWait(next, 1);
                     mascot.pop();
+                    rememberHit(m, t);
                     lastHitMidi = m; lastHitT = t;
                     next++;
-                    if (next >= ex.notes.size()) { done(true, null); return; }
+                    if (next >= ex.notes.size()) { done(true, passMsg("Harika!")); return; }
                     if (tab != null) { tab.current = next; tab.invalidate(); }
                     if (staff != null) { staff.current = next; staff.invalidate(); }
                     status.setText("Doğru! Sıradaki…");
@@ -310,9 +332,12 @@ public class ExerciseView extends LinearLayout {
                 }
                 if (lastHitMidi > 0 && (m == lastHitMidi || Math.abs(m - lastHitMidi) == 12) && !attack) return;
                 if (!attack && t - lastHitT < 250_000_000L) return;
-                markWait(next, 2);
+                if (stillRinging(m, t)) return; // önceki telin titreşimi: yeni notayı beklemeye devam et
                 String want = ex.hideTarget ? "başka bir nota" : Theory.midiName(exp.midi);
-                done(false, "Yanlış nota: " + Theory.midiName(m) + " çaldın, beklenen " + want);
+                String msg = "Yanlış nota: " + Theory.midiName(m) + " çaldın, beklenen " + want;
+                if (forgive(msg)) return;
+                markWait(next, 2);
+                done(false, msg);
             }
         });
         addSkipMic();
@@ -328,7 +353,7 @@ public class ExerciseView extends LinearLayout {
     }
 
     // ------------------------------------------------------------------ ZAMANLI DİZİ
-    private long[] T;
+    private long[] T; // kullanılmıyor (eski)
     private long[] W;
     private int countIn;
     private int bendIdx = -1;
@@ -362,8 +387,41 @@ public class ExerciseView extends LinearLayout {
         met = new AudioOut.Metronome(bpm, ex.beatsPerBar);
         met.audible = prog.metronomeAudible;
         met.start();
-        countIn = ex.beatsPerBar;
+        // kolay modda 2 ölçü sayım: ritme oturmak için daha çok zaman
+        countIn = ex.beatsPerBar * (prog.difficulty == 0 ? 2 : 1);
         running = true;
+        misses = 0;
+    }
+
+    // ---- zorluk ----
+    private int misses;
+
+    private float windowMs() {
+        float w;
+        if (prog.difficulty == 0) w = Math.max(200, prog.timingWindowMs);
+        else if (prog.difficulty == 2) w = Math.min(75, prog.timingWindowMs);
+        else w = prog.timingWindowMs;
+        return Math.max(w, ex.tolMs); // ısınma / kolaylaştırılmış tekrar kendi toleransını getirir
+    }
+
+    private int allowedMisses() { return prog.difficulty == 0 ? 2 : 0; }
+
+    /** Kolay modda küçük hataları affeder: true dönerse görev devam eder. */
+    private boolean forgive(String msg) {
+        if (misses >= allowedMisses()) return false;
+        misses++;
+        int left = allowedMisses() - misses;
+        status.setText("⚠ " + msg + " — devam et! (kalan hata hakkı: " + left + ")");
+        status.setTextColor(Ui.YELLOW);
+        if (mascot != null) {
+            mascot.setMood(Art.Mascot.Mood.THINK);
+            h.postDelayed(() -> { if (!finished && mascot != null) mascot.setMood(Art.Mascot.Mood.LISTEN); }, 700);
+        }
+        return true;
+    }
+
+    private String passMsg(String perfect) {
+        return misses == 0 ? perfect : "Geçtin! (" + misses + " küçük hata — kolay mod affetti)";
     }
 
     private long beatT(double beat) { return met.beatNanos(countIn + beat) + latencyNs(); }
@@ -373,12 +431,12 @@ public class ExerciseView extends LinearLayout {
         startMetronome(effectiveBpm());
         double beatMs = 60000.0 / effectiveBpm();
         int n = ex.notes.size();
-        T = new long[n]; W = new long[n];
+        T = new long[0]; W = new long[n];
         for (int i = 0; i < n; i++) {
             Ex.Note nt = ex.notes.get(i);
             float gapPrev = i > 0 ? nt.beat - ex.notes.get(i - 1).beat : 4;
             float gapNext = i < n - 1 ? ex.notes.get(i + 1).beat - nt.beat : 4;
-            double w = Math.min(prog.timingWindowMs, 0.45 * Math.min(gapPrev, gapNext) * beatMs);
+            double w = Math.min(windowMs(), 0.45 * Math.min(gapPrev, gapNext) * beatMs);
             if (nt.label != null && (nt.label.startsWith("h") || nt.label.startsWith("p") || nt.label.startsWith("s"))) w *= 1.5;
             W[i] = (long) (Math.max(45, w) * 1e6);
         }
@@ -394,8 +452,11 @@ public class ExerciseView extends LinearLayout {
         tickSeq();
     }
 
+    /** Notanın hedef zamanı: metronomun gerçek çıkış zamanından her seferinde yeniden hesaplanır. */
+    private long tAt(int i) { return beatT(ex.notes.get(i).beat); }
+
     private void seqNote(long t, float midi, boolean attack) {
-        if (!running || T == null) return;
+        if (!running || W == null) return;
         int m = Math.round(midi);
         // bend sürerken ara perdeleri yok say
         if (bendIdx >= 0 && t < bendEnd) {
@@ -403,38 +464,43 @@ public class ExerciseView extends LinearLayout {
             int base = b.midi - Integer.parseInt(b.label.substring(1));
             if (m >= base - 1 && m <= b.midi + 1) return;
         }
-        if (next >= T.length) return;
+        if (next >= W.length) return;
         Ex.Note exp = ex.notes.get(next);
+        if (!attack && !isLegato(exp)) return; // önceki telin titreşimi yeni nota sayılmaz
         int expMidi = exp.midi;
         boolean isBend = exp.label != null && exp.label.startsWith("b") && exp.label.length() > 1;
         if (isBend) expMidi = exp.midi - Integer.parseInt(exp.label.substring(1));
-        long lo = T[next] - W[next], hi = T[next] + W[next];
+        long tn = tAt(next), lo = tn - W[next], hi = tn + W[next];
         if (t < beatT(0) - 300_000_000L) return; // sayım sırasında yok say
         if (t < lo) {
             if (lastHitMidi > 0 && (m == lastHitMidi || Math.abs(m - lastHitMidi) == 12 || t - lastHitT < 120_000_000L)) return;
+            if (stillRinging(m, t)) return;
             if (!attack && lastHitMidi < 0) return;
-            failSeq(next, "Erken ya da fazladan nota (" + Theory.midiName(m) + ")");
+            failSeq(next, "Erken ya da fazladan nota (" + Theory.midiName(m) + ")", false);
             return;
         }
         if (t <= hi) {
             if (isBend ? matches(expMidi, m, true) : matchesNote(exp, m, true)) {
                 setTabState(next, 1);
+                rememberHit(m, t);
                 lastHitMidi = m; lastHitT = t;
-                if (isBend) { bendIdx = next; bendMax = m; bendEnd = T[next] + (long) (exp.dur * 60e9 / effectiveBpm()); }
+                if (isBend) { bendIdx = next; bendMax = m; bendEnd = tn + (long) (exp.dur * 60e9 / effectiveBpm()); }
                 next++;
                 return;
             }
             if (!attack && lastHitMidi > 0 && m == lastHitMidi) return;
-            failSeq(next, "Yanlış nota: " + Theory.midiName(m) + " (beklenen " + Theory.midiName(expMidi) + ")");
+            if (stillRinging(m, t)) return; // önceki tel çalmaya devam ediyor; doğru nota gelirse yine kabul edilir
+            failSeq(next, "Yanlış nota: " + Theory.midiName(m) + " (beklenen " + Theory.midiName(expMidi) + ")", true);
             return;
         }
-        failSeq(next, "Geç kaldın: " + Math.round((t - T[next]) / 1e6) + " ms");
+        failSeq(next, "Geç kaldın: " + Math.round((t - tn) / 1e6) + " ms", true);
     }
 
     private void setTabState(int i, int s) { if (tab != null && tab.state != null) { tab.state[i] = s; tab.invalidate(); } }
 
-    private void failSeq(int i, String msg) {
+    private void failSeq(int i, String msg, boolean skipNote) {
         setTabState(i, 2);
+        if (forgive(msg)) { if (skipNote && i == next) next++; return; }
         done(false, msg);
     }
 
@@ -449,14 +515,14 @@ public class ExerciseView extends LinearLayout {
         if (beat >= 0 && status.getText().toString().startsWith("Sayı")) { status.setText("Çal!"); status.setTextColor(Ui.BLUE); }
         if (bendIdx >= 0 && now > bendEnd + 150_000_000L) {
             Ex.Note b = ex.notes.get(bendIdx);
-            if (bendMax < b.midi - 0.5f) { failSeq(bendIdx, "Bend hedefe ulaşmadı (" + Theory.midiName(b.midi) + ")"); return; }
+            if (bendMax < b.midi - 0.5f) { int bi = bendIdx; bendIdx = -1; failSeq(bi, "Bend hedefe ulaşmadı (" + Theory.midiName(b.midi) + ")", false); if (finished) return; }
             bendIdx = -1;
         }
-        if (next < T.length && now > T[next] + W[next] + 380_000_000L) {
-            failSeq(next, "Kaçırdın: " + Theory.midiName(ex.notes.get(next).midi) + " zamanında gelmedi");
-            return;
+        if (next < W.length && now > tAt(next) + W[next] + 380_000_000L) {
+            failSeq(next, "Kaçırdın: " + Theory.midiName(ex.notes.get(next).midi) + " zamanında gelmedi", true);
+            if (finished) return;
         }
-        if (next >= T.length && bendIdx < 0 && now > T[T.length - 1] + 300_000_000L) { done(true, "Zamanlama kusursuz!"); return; }
+        if (next >= W.length && bendIdx < 0 && now > tAt(W.length - 1) + 300_000_000L) { done(true, passMsg("Zamanlama kusursuz!")); return; }
         h.postDelayed(this::tickSeq, 16);
     }
 
@@ -530,7 +596,7 @@ public class ExerciseView extends LinearLayout {
         addStartButton(() -> {
             chordIdx = 0; chordPending = false;
             startMetronome(effectiveBpm());
-            final long wc = (long) (Math.max(160, prog.timingWindowMs * 1.5) * 1e6);
+            final long wc = (long) (Math.max(160, windowMs() * 1.5) * 1e6);
             listen(new AudioIn.Listener() {
                 public void onFrame(long n, float m, float c, float db) {}
                 public void onNote(long n, float m, boolean a) {}
@@ -546,9 +612,12 @@ public class ExerciseView extends LinearLayout {
                         chordPending = false;
                         if (ch == null) return;
                         String bad = judgeChord(ch, ex.chords.get(idx));
-                        if (bad != null) { done(false, ex.chords.get(idx).split("@")[0] + " yerine " + bad + " duyuldu"); return; }
+                        if (bad != null) {
+                            String msg = ex.chords.get(idx).split("@")[0] + " yerine " + bad + " duyuldu";
+                            if (!forgive(msg)) { done(false, msg); return; }
+                        }
                         chordIdx = idx + 1;
-                        if (chordIdx >= ex.chords.size()) { h.postDelayed(() -> done(true, "Geçişler temiz ve zamanında!"), 300); return; }
+                        if (chordIdx >= ex.chords.size()) { h.postDelayed(() -> done(true, passMsg("Geçişler temiz ve zamanında!")), 300); return; }
                     }, 380);
                 }
             });
@@ -579,8 +648,10 @@ public class ExerciseView extends LinearLayout {
         String nm = ex.chords.get(show).split("@")[0];
         if (!nm.equals(cur.name)) { cur.name = nm; cur.shape = Theory.shapeFor(ex.chords.get(show)); cur.invalidate(); seqText.setText(chordSeqText(show)); }
         if (chordIdx < ex.chords.size() && !chordPending && now > beatT(chordIdx * ex.beatsPerChord) + wc + 450_000_000L) {
-            done(false, ex.chords.get(chordIdx).split("@")[0] + " akoruna zamanında geçemedin");
-            return;
+            String msg = ex.chords.get(chordIdx).split("@")[0] + " akoruna zamanında geçemedin";
+            if (!forgive(msg)) { done(false, msg); return; }
+            chordIdx++;
+            if (chordIdx >= ex.chords.size()) { done(true, passMsg("Bitti!")); return; }
         }
         h.postDelayed(() -> tickChanges(cur, seqText, wc), 16);
     }
@@ -630,16 +701,16 @@ public class ExerciseView extends LinearLayout {
         Runnable go = () -> {
             startMetronome(effectiveBpm());
             onsetsHeard = 0;
-            List<Long> ts = new ArrayList<>();
+            List<Double> bs = new ArrayList<>();
             List<Integer> idx = new ArrayList<>();
             double stepBeats = (double) ex.beatsPerBar / ex.grid;
-            // dokunmada mikrofon gecikmesi yok; yalnızca hoparlör gecikmesinin yaklaşık yarısı
-            long lat = ex.tapMode ? latencyNs() / 2 : latencyNs();
-            for (int i = 0; i < ex.hits.length; i++) if (ex.hits[i]) { ts.add(met.beatNanos(countIn + i * stepBeats) + lat); idx.add(i); }
-            RT = new long[ts.size()]; rIdx = new int[ts.size()]; rHit = new boolean[ts.size()];
-            for (int i = 0; i < RT.length; i++) { RT[i] = ts.get(i); rIdx[i] = idx.get(i); }
+            // dokunmada mikrofon gecikmesi yok: hedef, tıkın hoparlörden çıktığı an
+            rLat = ex.tapMode ? 0 : latencyNs();
+            for (int i = 0; i < ex.hits.length; i++) if (ex.hits[i]) { bs.add(i * stepBeats); idx.add(i); }
+            rBeat = new double[bs.size()]; RT = new long[bs.size()]; rIdx = new int[bs.size()]; rHit = new boolean[bs.size()];
+            for (int i = 0; i < rBeat.length; i++) { rBeat[i] = bs.get(i); rIdx[i] = idx.get(i); }
             double stepMs = stepBeats * 60000 / effectiveBpm();
-            float tol = ex.tolMs > 0 ? ex.tolMs : (ex.tapMode ? Math.max(140, prog.timingWindowMs) : prog.timingWindowMs);
+            float tol = Math.max(ex.tolMs, ex.tapMode ? Math.max(150, windowMs()) : windowMs());
             rWin = (long) (Math.min(tol, stepMs * 0.45) * 1e6);
             lastOnsetMatched = 0;
             if (fpad2 != null) { fpad2.setEnabled(true); if (mascot != null) mascot.setMood(Art.Mascot.Mood.LISTEN); }
@@ -700,21 +771,32 @@ public class ExerciseView extends LinearLayout {
         addSkipMic();
     }
 
+    private double[] rBeat;
+    private long rLat;
+
+    private long rtAt(int i) { return met.beatNanos(countIn + rBeat[i]) + rLat; }
+
     private void rhythmOnset(long t) {
-        if (!running || RT == null) return;
-        if (t < beatT(0) - 2 * rWin) return;
+        if (!running || rBeat == null) return;
+        if (t < rtAt(0) - 2 * rWin) return;
         int best = -1; long bd = Long.MAX_VALUE;
-        for (int i = 0; i < RT.length; i++) { long dd = Math.abs(t - RT[i]); if (dd < bd) { bd = dd; best = i; } }
-        if (best >= 0 && bd <= rWin && !rHit[best]) {
+        for (int i = 0; i < rBeat.length; i++) { if (rHit[i]) continue; long dd = Math.abs(t - rtAt(i)); if (dd < bd) { bd = dd; best = i; } }
+        if (best >= 0 && bd <= rWin) {
             rHit[best] = true; lastOnsetMatched = t;
             beats.gridState[rIdx[best]] = 1; beats.invalidate();
+            if (mascot != null && ex.tapMode) mascot.pop();
             return;
         }
         if (t - lastOnsetMatched < 100_000_000L) return;
-        if (best >= 0 && bd > rWin) {
-            beats.gridState[rIdx[best]] = 2;
-            done(false, t < RT[best] ? "Zamansız vuruş: " + Math.round((RT[best] - t) / 1e6) + " ms erken ya da sus yerinde çaldın" : "Zamansız vuruş: " + Math.round((t - RT[best]) / 1e6) + " ms geç ya da sus yerinde çaldın");
-        } else done(false, "Fazladan vuruş");
+        String msg;
+        if (best >= 0) {
+            long d = t - rtAt(best);
+            msg = d < 0 ? "Biraz erken (" + Math.round(-d / 1e6) + " ms)" : "Biraz geç (" + Math.round(d / 1e6) + " ms)";
+        } else msg = "Fazladan vuruş";
+        lastOnsetMatched = t;
+        if (forgive(msg)) return;
+        if (best >= 0) { beats.gridState[rIdx[best]] = 2; beats.invalidate(); }
+        done(false, msg + (ex.tapMode ? "" : " ya da sus yerinde çaldın"));
     }
 
     private void tickRhythm() {
@@ -722,21 +804,26 @@ public class ExerciseView extends LinearLayout {
         long now = System.nanoTime();
         double beat = (now - met.beatNanos(countIn)) / (60e9 / effectiveBpm());
         beats.beatPos = (float) (beat + countIn);
-        beats.centerText = beat < 0 ? "Sayım: " + (int) Math.ceil(-beat) : Math.round(effectiveBpm()) + " BPM";
+        beats.gridPos = (float) beat;
+        beats.centerText = beat < 0 ? "Hazırlan… " + (int) Math.ceil(-beat) : Math.round(effectiveBpm()) + " BPM";
         beats.invalidate();
         boolean all = true;
-        for (int i = 0; i < RT.length; i++) {
+        for (int i = 0; i < rBeat.length; i++) {
             if (!rHit[i]) {
                 all = false;
-                if (now > RT[i] + rWin + (ex.tapMode ? 120_000_000L : 400_000_000L)) {
-                    beats.gridState[rIdx[i]] = 2;
-                    if (!ex.tapMode && onsetsHeard == 0) done(false, "Mikrofon hiç vuruş duymadı. Telefonu gitara yaklaştır, daha güçlü vur ya da Profil → Ayarlar → Mikrofon eşiğini düşür.");
-                    else done(false, "Vuruşu kaçırdın: " + (i + 1) + ". vuruş zamanında gelmedi");
-                    return;
+                if (now > rtAt(i) + rWin + (ex.tapMode ? 150_000_000L : 400_000_000L)) {
+                    beats.gridState[rIdx[i]] = 2; beats.invalidate();
+                    rHit[i] = true; // bu vuruş kapandı
+                    if (!ex.tapMode && onsetsHeard == 0 && misses >= allowedMisses()) {
+                        done(false, "Mikrofon hiç vuruş duymadı. Telefonu gitara yaklaştır, daha güçlü vur ya da Profil → Ayarlar → Mikrofon eşiğini düşür.");
+                        return;
+                    }
+                    String msg = "Bir vuruşu kaçırdın";
+                    if (!forgive(msg)) { done(false, msg + ": " + (i + 1) + ". vuruş"); return; }
                 }
             }
         }
-        if (all && now > RT[RT.length - 1] + rWin + 200_000_000L) { done(true, "Ritim tam oturdu!"); return; }
+        if (all && now > rtAt(rBeat.length - 1) + rWin + 200_000_000L) { done(true, passMsg("Ritim tam oturdu!")); return; }
         h.postDelayed(this::tickRhythm, 16);
     }
 
@@ -757,11 +844,12 @@ public class ExerciseView extends LinearLayout {
                 public void onFrame(long n, float m, float c, float db) { showHeard(m); }
                 public void onOnset(long n, float db) {}
                 public void onNote(long t, float midi, boolean a) {
+                    if (!a) return;
                     if (t < beatT(0) - 200_000_000L) return;
                     int pc = Theory.pc(Math.round(midi));
                     boolean ok = false;
                     for (int p : ex.allowedPcs) if (p == pc) ok = true;
-                    if (!ok) { done(false, "Gam dışı nota: " + Theory.SHARP[pc] + " — " + ex.scaleLabel + " notalarında kal"); return; }
+                    if (!ok) { String msg = "Gam dışı nota: " + Theory.SHARP[pc]; if (!forgive(msg)) done(false, msg + " — " + ex.scaleLabel + " notalarında kal"); return; }
                     improvCount++;
                     status.setText("Notalar: " + improvCount + " / en az " + (ex.beats / 2));
                 }
@@ -779,7 +867,7 @@ public class ExerciseView extends LinearLayout {
         beats.centerText = beat < 0 ? "Sayım: " + (int) Math.ceil(-beat) : "Kalan vuruş: " + Math.max(0, (int) Math.ceil(ex.beats - beat));
         beats.invalidate();
         if (beat >= ex.beats) {
-            if (improvCount >= ex.beats / 2) done(true, improvCount + " nota, hepsi gam içinde!");
+            if (improvCount >= ex.beats / 2) done(true, passMsg(improvCount + " nota, hepsi gam içinde!"));
             else done(false, "Daha cesur ol: en az " + (ex.beats / 2) + " nota çalmalısın (" + improvCount + ")");
             return;
         }
