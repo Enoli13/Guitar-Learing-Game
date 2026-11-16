@@ -379,7 +379,7 @@ public class ExerciseView extends LinearLayout {
         beats.beatsPerBar = ex.beatsPerBar;
         beats.centerText = Math.round(effectiveBpm()) + " BPM";
         addView(beats);
-        addStatus("Hazır olunca Başla'ya bas. Metronom 1 ölçü sayacak.");
+        addStatus("Başla'ya bas: 5 sn sessiz geri sayım, sonra sayım ölçüsü, sonra \"ŞİMDİ!\" yazınca çalmaya başla.");
         addStartButton(this::startTimedSeq);
         addSkipMic();
     }
@@ -395,13 +395,29 @@ public class ExerciseView extends LinearLayout {
     }
 
     private void startMetronome(float bpm) {
-        met = new AudioOut.Metronome(bpm, ex.beatsPerBar);
+        // 5 sn sessiz geri sayım, sonra (farklı sesli) sayım ölçüsü, sonra 1. vuruş
+        met = new AudioOut.Metronome(bpm, ex.beatsPerBar, LEAD_SECONDS);
         met.audible = prog.metronomeAudible;
-        met.start();
         // yavaş tempolarda 2 ölçü sayım: ritme oturmak için zaman
         countIn = ex.beatsPerBar * (bpm <= 80 ? 2 : 1);
+        met.countInBeats = countIn;
+        met.start();
         running = true;
         misses = 0;
+    }
+
+    static final float LEAD_SECONDS = 5f;
+
+    /** Geri sayım / sayım / "ŞİMDİ" / normal metin. beat: 1. vuruşa göre (sayımda negatif). */
+    private String phaseText(double beat, String normal) {
+        long now = System.nanoTime(), first = met.beatNanos(0);
+        if (now < first) return "⏳ Hazırlan… " + (int) Math.ceil((first - now) / 1e9);
+        if (beat < 0) {
+            int b = (int) Math.floor(beat + countIn);
+            return "Sayım: " + (b % ex.beatsPerBar + 1) + "   (" + (int) Math.ceil(-beat) + " vuruş sonra başla)";
+        }
+        if (beat < 1) return "▶ ŞİMDİ!";
+        return normal;
     }
 
     // ---- zorluk ----
@@ -446,7 +462,7 @@ public class ExerciseView extends LinearLayout {
             if (nt.label != null && (nt.label.startsWith("h") || nt.label.startsWith("p") || nt.label.startsWith("s"))) w *= 1.5;
             W[i] = (long) (Math.max(45, w) * 1e6);
         }
-        status.setText("Sayıyor…");
+        status.setText("Hazırlan: 5 sn sessizlik, sonra sayım, sonra başla.");
         listen(new AudioIn.Listener() {
             public void onFrame(long t, float m, float c, float db) {
                 showHeard(m);
@@ -516,9 +532,9 @@ public class ExerciseView extends LinearLayout {
         double beat = (now - met.beatNanos(countIn)) / (60e9 / effectiveBpm());
         if (tab != null) { tab.cursorBeat = (float) Math.max(0, beat); tab.invalidate(); }
         beats.beatPos = (float) (beat + countIn);
-        beats.centerText = beat < 0 ? "Sayım: " + (int) Math.ceil(-beat) : Math.round(effectiveBpm()) + " BPM";
+        beats.centerText = phaseText(beat, Math.round(effectiveBpm()) + " BPM");
         beats.invalidate();
-        if (beat >= 0 && status.getText().toString().startsWith("Sayı")) { status.setText("Çal!"); status.setTextColor(Ui.BLUE); }
+        if (beat >= 0 && status.getText().toString().startsWith("Hazırlan")) { status.setText("Çal!"); status.setTextColor(Ui.BLUE); }
         if (bendIdx >= 0 && now > bendEnd + 150_000_000L) {
             Ex.Note b = ex.notes.get(bendIdx);
             if (bendMax < b.midi - 0.5f) { int bi = bendIdx; bendIdx = -1; failSeq(bi, "Bend hedefe ulaşmadı (" + Theory.midiName(b.midi) + ")", false); if (finished) return; }
@@ -647,7 +663,7 @@ public class ExerciseView extends LinearLayout {
         long now = System.nanoTime();
         double beat = (now - met.beatNanos(countIn)) / (60e9 / effectiveBpm());
         beats.beatPos = (float) (beat + countIn);
-        beats.centerText = beat < 0 ? "Sayım: " + (int) Math.ceil(-beat) : Math.round(effectiveBpm()) + " BPM";
+        beats.centerText = phaseText(beat, Math.round(effectiveBpm()) + " BPM");
         beats.invalidate();
         // görüntülenecek akor: bir sonraki akoru yarım vuruş önceden göster
         int show = (int) Math.max(0, Math.min(ex.chords.size() - 1, Math.floor((beat + 0.6) / ex.beatsPerChord)));
@@ -719,7 +735,7 @@ public class ExerciseView extends LinearLayout {
         else how = ex.notation != null ? "Notaların başladığı anlarda telleri susturup vur; suslarda vurma." : "↓ aşağı vuruş, ↑ yukarı vuruş, • sus (çalma ama el sallanmaya devam etsin)";
         if (ex.gapFromBar > 0) how += "\n🤫 " + ex.gapFromBar + (ex.gapToBar > ex.gapFromBar ? "–" + ex.gapToBar : "") + ". ölçüde metronom susacak: nabzı içinden sürdür!";
         addView(Ui.text(ctx, how, 14, Ui.MUTED, false));
-        addStatus("Başla'ya bas. Metronom önce sayacak.");
+        addStatus("Başla'ya bas: önce 5 sn sessiz geri sayım, sonra tok sesli sayım ölçüsü, sonra \"ŞİMDİ!\" yazınca 1. vuruş.");
         boolean needPad = ex.tapMode || ex.pulseTap;
         boolean needMic = !ex.tapMode;
         Button pad = null;
@@ -875,7 +891,7 @@ public class ExerciseView extends LinearLayout {
         beats.gridPos = (float) beat;
         boolean silent = met.isMuted(beat + countIn);
         beats.hideDots = silent;
-        beats.centerText = beat < 0 ? "Hazırlan… " + (int) Math.ceil(-beat) : silent ? "🤫 içinden say!" : Math.round(effectiveBpm()) + " BPM";
+        beats.centerText = phaseText(beat, silent ? "🤫 içinden say!" : Math.round(effectiveBpm()) + " BPM");
         beats.invalidate();
         if (notation != null) { notation.cursorBeat = (float) beat; notation.invalidate(); }
         boolean a = checkMisses(main, now);
@@ -925,7 +941,7 @@ public class ExerciseView extends LinearLayout {
         long now = System.nanoTime();
         double beat = (now - met.beatNanos(countIn)) / (60e9 / effectiveBpm());
         beats.beatPos = (float) (beat + countIn);
-        beats.centerText = beat < 0 ? "Sayım: " + (int) Math.ceil(-beat) : "Kalan vuruş: " + Math.max(0, (int) Math.ceil(ex.beats - beat));
+        beats.centerText = phaseText(beat, "Kalan vuruş: " + Math.max(0, (int) Math.ceil(ex.beats - beat)));
         beats.invalidate();
         if (beat >= ex.beats) {
             if (improvCount >= ex.beats / 2) done(true, passMsg(improvCount + " nota, hepsi gam içinde!"));
@@ -1110,7 +1126,7 @@ public class ExerciseView extends LinearLayout {
         long now = System.nanoTime();
         double beat = (now - met.beatNanos(countIn)) / (60e9 / 80);
         beats.beatPos = (float) (beat + countIn);
-        beats.centerText = beat < 0 ? "Sayım: " + (int) Math.ceil(-beat) : "Vur!";
+        beats.centerText = phaseText(beat, "Vur!");
         beats.invalidate();
         if (beat > 9.3) {
             if (calOffsets.size() >= 5) {

@@ -337,7 +337,8 @@ public final class Views {
                 c.drawCircle(x, 22 * d, i == cur ? r * 1.25f : r, p);
             }
             if (centerText != null && !centerText.isEmpty()) {
-                p.setColor(Ui.TEXT); p.setTextAlign(Paint.Align.CENTER); p.setTextSize(15 * d); p.setTypeface(Typeface.DEFAULT_BOLD);
+                boolean now = centerText.startsWith("▶"), wait = centerText.startsWith("⏳");
+                p.setColor(now ? Ui.GREEN : wait ? Ui.ORANGE : Ui.TEXT); p.setTextAlign(Paint.Align.CENTER); p.setTextSize((now ? 24 : wait ? 19 : 15) * d); p.setTypeface(Typeface.DEFAULT_BOLD);
                 c.drawText(centerText, W / 2, 58 * d, p);
                 p.setTypeface(Typeface.DEFAULT);
             }

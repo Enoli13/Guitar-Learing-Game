@@ -110,11 +110,16 @@ public class AudioOut {
         private volatile boolean anchored;
         public volatile float extraLatencyMs = 0;
 
-        public Metronome(float bpm, int beatsPerBar) {
+        public volatile int countInBeats = 0; // sayım vuruşları farklı (tok) bir sesle çalınır
+
+        public Metronome(float bpm, int beatsPerBar) { this(bpm, beatsPerBar, 0.5f); }
+
+        /** leadSeconds: ilk tıktan önceki sessiz hazırlık süresi. */
+        public Metronome(float bpm, int beatsPerBar, float leadSeconds) {
             this.bpm = bpm;
             this.beatsPerBar = beatsPerBar;
             this.framesPerBeat = Math.round(SR * 60.0 / bpm);
-            this.startFrame = SR / 2; // yarım saniye sessizlikle başla
+            this.startFrame = (long) (SR * leadSeconds);
         }
 
         public float bpm() { return bpm; }
@@ -159,6 +164,7 @@ public class AudioOut {
             short[] buf = new short[block];
             long written = 0;
             float[] hi = clickWave(2600, 0.020f, 0.9f), lo = clickWave(1800, 0.020f, 0.6f);
+            float[] cHi = clickWave(1700, 0.030f, 0.8f), cLo = clickWave(1700, 0.030f, 0.45f); // sayım: daha tok tık
             AudioTimestamp ts = new AudioTimestamp();
             int c = 0;
             while (running) {
@@ -167,7 +173,8 @@ public class AudioOut {
                     float v = 0;
                     if (f >= 0 && audible) {
                         long beat = f / framesPerBeat, inBeat = f % framesPerBeat;
-                        float[] w = (beat % beatsPerBar == 0) ? hi : lo;
+                        boolean counting = beat < countInBeats;
+                        float[] w = counting ? ((beat % beatsPerBar == 0) ? cHi : cLo) : ((beat % beatsPerBar == 0) ? hi : lo);
                         if (inBeat < w.length && !isMuted(beat)) v = w[(int) inBeat];
                     }
                     buf[i] = (short) (v * 20000);
