@@ -151,8 +151,8 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         boolean timed = needsTiming(e) || e.tapMode;
         if (timed && e.type != Ex.Type.IMPROV && e.bpm >= 50) {
             float base = Math.max(prog.timingWindowMs, e.tolMs);
-            float[] f = prog.difficulty == 2 ? new float[0] : prog.difficulty == 1 ? new float[]{0.8f} : new float[]{0.7f, 0.85f};
-            float[] tolAdd = prog.difficulty == 1 ? new float[]{50} : new float[]{90, 45};
+            float[] f = {0.7f, 0.85f};
+            float[] tolAdd = {90, 45};
             for (int i = 0; i < f.length; i++) {
                 Ex w = e.copy();
                 w.bpm = Math.max(40, Math.round(e.bpm * f[i]));

@@ -424,19 +424,6 @@ public class MainActivity extends Activity {
 
     private View settings() {
         LinearLayout c = Ui.card(this);
-        c.addView(Ui.text(this, "Zorluk", 16, Ui.TEXT, true));
-        c.addView(Ui.text(this, "Kolay: geniş zamanlama toleransı, uzun sayım ve görev başına 2 hata hakkı. Normal: hata anında görev biter. Zor: dar tolerans.", 13, Ui.MUTED, false));
-        LinearLayout diff = Ui.hbox(this);
-        String[] dn = {"Kolay", "Normal", "Zor"};
-        int[] dc = {Ui.GREEN, Ui.BLUE, Ui.RED};
-        for (int i = 0; i < 3; i++) {
-            final int k = i;
-            android.widget.Button b = prog.difficulty == i ? Ui.button(this, dn[i], dc[i], Ui.darker(dc[i], 0.7f)) : Ui.secondary(this, dn[i]);
-            b.setOnClickListener(v -> { prog.difficulty = k; prog.save(); render(); });
-            LinearLayout.LayoutParams lp = Ui.weight(1); lp.setMargins(Ui.dp(this, 3), Ui.dp(this, 6), Ui.dp(this, 3), Ui.dp(this, 10));
-            diff.addView(b, lp);
-        }
-        c.addView(diff);
         c.addView(toggle("Ses efektleri (doğru/yanlış sesleri)", prog.sfxOn, v -> { prog.sfxOn = v; Sfx.enabled = v; }));
         c.addView(toggle("Metronom sesi", prog.metronomeAudible, v -> prog.metronomeAudible = v));
         c.addView(toggle("Katı oktav (oktav hatalarını kabul etme)", prog.strictOctave, v -> prog.strictOctave = v));
@@ -445,7 +432,6 @@ public class MainActivity extends Activity {
         time.setOnClickListener(v -> new android.app.TimePickerDialog(this, (tp, h, m) -> { prog.reminderHour = h; prog.reminderMinute = m; prog.save(); Reminder.schedule(this); render(); }, prog.reminderHour, prog.reminderMinute, true).show());
         c.addView(time, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 8, 8));
         c.addView(slider("Günlük hedef: ", " XP", 10, 100, prog.dailyGoal, v -> prog.dailyGoal = v));
-        c.addView(slider("Zamanlama toleransı: ±", " ms (küçük = zor)", 50, 200, (int) prog.timingWindowMs, v -> prog.timingWindowMs = v));
         c.addView(slider("Mikrofon eşiği: ", " dB (gürültülü ortamda artır)", -10, 20, (int) prog.micSensitivity, v -> prog.micSensitivity = v));
         TextView lat = Ui.text(this, "Ölçülen gecikme: " + Math.round(prog.latencyMs) + " ms" + (prog.calibrated ? "" : " (ayarlanmadı)"), 14, Ui.MUTED, false);
         c.addView(lat, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 8, 4));

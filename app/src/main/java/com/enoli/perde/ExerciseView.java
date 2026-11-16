@@ -387,8 +387,8 @@ public class ExerciseView extends LinearLayout {
         met = new AudioOut.Metronome(bpm, ex.beatsPerBar);
         met.audible = prog.metronomeAudible;
         met.start();
-        // kolay modda 2 ölçü sayım: ritme oturmak için daha çok zaman
-        countIn = ex.beatsPerBar * (prog.difficulty == 0 ? 2 : 1);
+        // yavaş tempolarda 2 ölçü sayım: ritme oturmak için zaman
+        countIn = ex.beatsPerBar * (bpm <= 80 ? 2 : 1);
         running = true;
         misses = 0;
     }
@@ -396,15 +396,10 @@ public class ExerciseView extends LinearLayout {
     // ---- zorluk ----
     private int misses;
 
-    private float windowMs() {
-        float w;
-        if (prog.difficulty == 0) w = Math.max(200, prog.timingWindowMs);
-        else if (prog.difficulty == 2) w = Math.min(75, prog.timingWindowMs);
-        else w = prog.timingWindowMs;
-        return Math.max(w, ex.tolMs); // ısınma / kolaylaştırılmış tekrar kendi toleransını getirir
-    }
+    /** Tek yol: sabit tolerans; ısınma görevleri kendi (daha geniş) toleransını getirir. */
+    private float windowMs() { return Math.max(prog.timingWindowMs, ex.tolMs); }
 
-    private int allowedMisses() { return prog.difficulty == 0 ? 2 : 0; }
+    private int allowedMisses() { return 0; }
 
     /** Kolay modda küçük hataları affeder: true dönerse görev devam eder. */
     private boolean forgive(String msg) {
@@ -421,7 +416,7 @@ public class ExerciseView extends LinearLayout {
     }
 
     private String passMsg(String perfect) {
-        return misses == 0 ? perfect : "Geçtin! (" + misses + " küçük hata — kolay mod affetti)";
+        return perfect;
     }
 
     private long beatT(double beat) { return met.beatNanos(countIn + beat) + latencyNs(); }
