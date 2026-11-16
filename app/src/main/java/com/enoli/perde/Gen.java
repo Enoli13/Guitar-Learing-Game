@@ -159,6 +159,15 @@ public final class Gen {
             case "chord": return chord(p, r);
             case "changes": return changes(p);
             case "strum": return strum(p);
+            case "tap": { p.put("tap", "1"); return strum(p); }
+            case "freestrum": {
+                Ex e = new Ex();
+                e.type = Ex.Type.RHYTHM;
+                e.freeCount = Integer.parseInt(p.getOrDefault("count", "4"));
+                e.hits = new boolean[0];
+                e.prompt = "Mikrofon testi: telleri sol elinle sustur ve istediğin hızda " + e.freeCount + " kez vur";
+                return e;
+            }
             case "improv": return improv(p);
             case "earback": return earBack(p, r);
             case "bend": return bend(p);
@@ -767,7 +776,10 @@ public final class Gen {
             char c = pat.charAt(i);
             e.hits[b * pat.length() + i] = c == 'D' || c == 'U' || c == 'X' || c == 'x';
         }
-        e.prompt = e.strumChord != null ? e.strumChord + " akoruyla ritmi çal" : "Telleri sol elinle susturup ritmi çal";
+        e.tapMode = "1".equals(p.get("tap"));
+        e.tolMs = Float.parseFloat(p.getOrDefault("tol", "0"));
+        e.prompt = e.tapMode ? "Gitarı bırak: metronomla birlikte büyük düğmeye dokun" : e.strumChord != null ? e.strumChord + " akoruyla ritmi çal" : "Telleri sol elinle susturup ritmi çal";
+        if (p.containsKey("title")) e.prompt = p.get("title");
         return e;
     }
 

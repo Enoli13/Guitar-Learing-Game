@@ -94,6 +94,16 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         Ui.applySystemInsets(root);
     }
 
+    private boolean calOffered;
+
+    static boolean needsTiming(Ex e) {
+        switch (e.type) {
+            case PLAY_SEQ: case CHANGES: case IMPROV: return true;
+            case RHYTHM: return !e.tapMode && e.freeCount == 0;
+            default: return false;
+        }
+    }
+
     static boolean isMic(Ex.Type t) {
         switch (t) {
             case INFO: case CHOICE: case FRET_TAP: return false;
@@ -131,11 +141,12 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
             queue.addAll(Gen.make("g: " + ("tuner".equals(mode) ? "tune" : "calibrate"), r));
         }
         if (System.currentTimeMillis() < skipMicUntil) dropMic();
+        if ("calibrate".equals(mode) || "tuner".equals(mode)) calOffered = true;
         heartsView.setText("test".equals(mode) ? "♥ " + hearts : "");
     }
 
     private void dropMic() {
-        for (int i = queue.size() - 1; i >= 0; i--) if (isMic(queue.get(i).type)) queue.remove(i);
+        for (int i = queue.size() - 1; i >= 0; i--) { Ex q = queue.get(i); if (isMic(q.type) && !q.tapMode) queue.remove(i); }
     }
 
     private float bonusFor(Ex e) {
@@ -150,6 +161,14 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         bar.invalidate();
         if (queue.isEmpty()) { finishSession(); return; }
         current = queue.remove(0);
+        if (!prog.calibrated && !calOffered && needsTiming(current)) {
+            // zamanlı ilk görevden önce gecikme ayarı yapılmadıysa önce onu yap
+            calOffered = true;
+            queue.add(0, current);
+            current = Gen.make("g: calibrate", new Random()).get(0);
+            current.title = "Önce gecikme ayarı";
+            total++;
+        }
         exView.stop();
         exView.bind(current, this, bonusFor(current));
         scroll.scrollTo(0, 0);

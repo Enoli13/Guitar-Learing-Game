@@ -30,15 +30,25 @@ g: open s=6-1
 g: open s=1-6
 g: open s=6,4,5,3,2,1
 g: playnote s=1-6 f=0-0 len=5 show=name
-## u01e | Tempo ve vuruş
-> Müzikteki nabza VURUŞ denir. Tempo, dakikadaki vuruş sayısıdır: BPM (beats per minute). 60 BPM saniyede bir vuruştur.
-> Metronom ilk ölçüde sayar (giriş), sonra sen vuruşun TAM üstünde çalarsın. Erken ya da geç kalırsan görev o anda başarısız olur.
+## u01e | Ritmi hisset (gitarsız)
+> Müzikteki nabza VURUŞ denir. Tempo, dakikadaki vuruş sayısıdır: BPM. 60 BPM saniyede bir vuruştur.
+> Gitar çalmadan önce ritmi bedeninde hissetmen gerekir. Önce gitarı bırak: metronom "tık" dediği anda ekrandaki büyük düğmeye dokun. Turuncu daire 1. vuruşu, mavi daireler 2-3-4. vuruşları gösterir.
 > ---
-> Susturulmuş vuruş: sol elinin parmaklarını tellerin üstüne hafifçe yatır (basma), sağ elle tellere vur. "Çık" diye kuru bir ses çıkar. Bu ritim çalışmalarının temelidir.
-q: 120 BPM saniyede kaç vuruştur? | 2 | 1 | 120 | 1/2
+> İpucu: Tıkları içinden "1-2-3-4" diye say, ayağını da yere vur. Düğmeye tıkla AYNI ANDA dokun, tıkı duyduktan sonra değil.
 q: 60 BPM'de iki vuruş arası ne kadar sürer? | 1 saniye | 0,5 saniye | 2 saniye | 60 saniye
+q: 120 BPM saniyede kaç vuruştur? | 2 | 1 | 120 | 1/2
+g: tap p="D...D..." bpm=60 bars=2 tol=200 title="Sadece 1. ve 3. vuruşlarda dokun (60 BPM)"
+g: tap p="D.D.D.D." bpm=60 bars=2 tol=180 title="Her vuruşta dokun (60 BPM)"
+g: tap p="D.D.D.D." bpm=70 bars=2 title="Her vuruşta dokun (70 BPM)"
+g: tap p="D.D...D." bpm=60 bars=2 title="3. vuruşta dur, dokunma"
+## u01f | Susturulmuş vuruş
+> Şimdi aynısını gitarla yapacağız. SUSTURULMUŞ VURUŞ: sol elinin parmaklarını tellerin üstüne hafifçe yatır (basma, sadece değsin), sağ elle penayla tellere vur. "Çık" diye kuru bir ses çıkar. Bu, ritim çalışmalarının temelidir.
+> Önce mikrofonun seni duyup duymadığını test edeceğiz, sonra metronomla adım adım ilerleyeceğiz: önce yavaş ve geniş toleransla, sonra normal.
+g: freestrum count=4
+g: strum p="D...D..." bpm=50 bars=2 tol=220 title="Sadece 1. ve 3. vuruşta vur (50 BPM, kolay)"
+g: strum p="D.D.D.D." bpm=50 bars=1 tol=200 title="Her vuruşta vur (50 BPM, kolay)"
+g: strum p="D.D.D.D." bpm=55 bars=2 tol=160
 g: strum p="D.D.D.D." bpm=60 bars=2
-g: strum p="D.D.D.D." bpm=70 bars=2
 g: seq bpm=60 tab="6:0/q 6:0/q 6:0/q 6:0/q 5:0/q 5:0/q 5:0/q 5:0/q" title="Açık 6. ve 5. teller, dörtlükler"
 
 # u02 | Müzik Alfabesi | Notalar, yarım ses, ilk pozisyon
@@ -122,10 +132,15 @@ g: seq bpm=80 title="Frère Jacques" tab="2:1/q 2:3/q 1:0/q 2:1/q 2:1/q 2:3/q 1:
 > 4/4 ölçüde her ölçü 4 dörtlük vuruştur. BİRLİK nota 4 vuruş, İKİLİK 2, DÖRTLÜK 1, SEKİZLİK 1/2, ON ALTILIK 1/4 vuruş sürer.
 > Ölçü çizgileri (|) müziği eşit parçalara böler. Saymak: "1 2 3 4", sekizliklerle "1 ve 2 ve 3 ve 4 ve".
 g: rhythmval n=6
+g: tap p="D.......D......." grid=16 bpm=60 bars=1 tol=200 title="Birlikler: her ölçünün sadece 1. vuruşunda dokun"
+g: tap p="D...D..." bpm=60 bars=2 title="İkilikler: 1 ve 3'te dokun"
 g: strum p="D...D..." bpm=60 bars=2
 g: strum p="D.......D......." grid=16 bpm=60 bars=1 bar=4 title="Birlikler"
 ## u04b | Sekizlikler ve aşağı-yukarı vuruş
 > Sekizlikleri aşağı-yukarı (D-U) çal: vuruşun kendisinde AŞAĞI, "ve"de YUKARI. Sağ el saat sarkacı gibi hiç durmadan sallanır; çalmadığın yerde bile hareket devam eder ama tellere değmez. Bu, ritmin sırrıdır.
+g: tap p="DUDUDUDU" bpm=50 bars=2 title="Sekizlikler: her vuruşta ve aradaki “ve”de dokun"
+g: tap p="D.DUD.DU" bpm=55 bars=2
+g: strum p="DUDUDUDU" bpm=50 bars=2 tol=150 title="Sekizlikler gitarla (yavaş)"
 g: strum p="DUDUDUDU" bpm=60 bars=2
 g: strum p="D.DUD.DU" bpm=65 bars=2
 g: strum p="D.DU.UDU" bpm=60 bars=2
@@ -133,6 +148,8 @@ g: strum p="D.DU.UDU" bpm=75 bars=2
 ## u04c | Susler
 > SUS, sessizlik işaretidir ve notalar kadar önemlidir. Her nota değerinin bir sus karşılığı vardır (dörtlük sus = 1 vuruş sessizlik).
 > Sus sırasında sağ el hareketi devam eder, sadece tellere değmez. Sus yerinde çalarsan görev başarısız olur!
+g: tap p="D.D...D." bpm=60 bars=2
+g: tap p="..D...D." bpm=60 bars=2
 g: strum p="D.D...D." bpm=60 bars=2
 g: strum p="..D...D." bpm=60 bars=2
 g: seq bpm=60 tab="5:0/q r/q 5:0/q r/q 6:0/q 6:0/q r/h"
@@ -348,6 +365,7 @@ g: strum p="D.DUD.DUD.DUD.DU" grid=16 bpm=60 bars=1
 > SENKOP, vurguyu zayıf zamana (vuruş arasına, "ve"ye) kaydırmaktır. Funk, reggae, rock — groove'un ruhu buradadır.
 > Senkoplu ritim çalarken sağ el sarkacını asla durdurma; vuruş aralarında "boşa" sallan.
 g: strum p="D..U.UD." bpm=60 bars=2
+g: tap p=".U.U.U.U" bpm=60 bars=2 title="Sadece vuruş aralarında (“ve”) dokun"
 g: strum p=".U.U.U.U" bpm=60 bars=2
 g: seq bpm=70 tab="6:0/e 6:3/q 6:0/e 6:5/q 6:3/q"
 ## u11d | Triole ve shuffle

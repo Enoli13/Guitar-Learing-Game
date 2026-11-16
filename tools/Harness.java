@@ -39,6 +39,8 @@ public class Harness {
                         }
                         if (e.type == Ex.Type.PLAY_CHORD) check(e.chordShape != null, "şekil yok: " + s + " " + e.chord);
                         if (e.type == Ex.Type.CHANGES) for (String c : e.chords) check(Theory.shapeFor(c) != null, "şekil yok: " + c);
+                        if (e.type == Ex.Type.RHYTHM && e.freeCount == 0) check(e.hits != null && e.hits.length > 0 && e.grid > 0, "ritim boş: " + s);
+                        if (e.prompt != null && e.prompt.contains("\\")) check(false, "kaçış karakteri: " + s);
                         if (e.type == Ex.Type.RHYTHM && e.strumChord != null) check(Theory.shapeFor(e.strumChord) != null, "şekil yok");
                     }
                 }

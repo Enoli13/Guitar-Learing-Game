@@ -50,6 +50,9 @@ public class Ex {
     public int grid = 8;          // ölçü başına adım
     public boolean[] hits;       // tüm ölçüler için
     public String strumChord;
+    public boolean tapMode;       // gitar yerine ekrana dokun
+    public int freeCount;         // >0: metronomsuz, serbest vuruş sayısı (mikrofon testi)
+    public float tolMs;           // >0: bu görev için özel zamanlama toleransı
 
     // IMPROV
     public int[] allowedPcs;

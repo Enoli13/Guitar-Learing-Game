@@ -452,7 +452,7 @@ public class ExerciseView extends LinearLayout {
             if (bendMax < b.midi - 0.5f) { failSeq(bendIdx, "Bend hedefe ulaşmadı (" + Theory.midiName(b.midi) + ")"); return; }
             bendIdx = -1;
         }
-        if (next < T.length && now > T[next] + W[next] + 150_000_000L) {
+        if (next < T.length && now > T[next] + W[next] + 380_000_000L) {
             failSeq(next, "Kaçırdın: " + Theory.midiName(ex.notes.get(next).midi) + " zamanında gelmedi");
             return;
         }
@@ -578,7 +578,7 @@ public class ExerciseView extends LinearLayout {
         int show = (int) Math.max(0, Math.min(ex.chords.size() - 1, Math.floor((beat + 0.6) / ex.beatsPerChord)));
         String nm = ex.chords.get(show).split("@")[0];
         if (!nm.equals(cur.name)) { cur.name = nm; cur.shape = Theory.shapeFor(ex.chords.get(show)); cur.invalidate(); seqText.setText(chordSeqText(show)); }
-        if (chordIdx < ex.chords.size() && !chordPending && now > beatT(chordIdx * ex.beatsPerChord) + wc + 200_000_000L) {
+        if (chordIdx < ex.chords.size() && !chordPending && now > beatT(chordIdx * ex.beatsPerChord) + wc + 450_000_000L) {
             done(false, ex.chords.get(chordIdx).split("@")[0] + " akoruna zamanında geçemedin");
             return;
         }
@@ -591,8 +591,11 @@ public class ExerciseView extends LinearLayout {
     private int[] rIdx;
     private long rWin, lastOnsetMatched;
 
+    private int onsetsHeard;
+
     private void buildRhythm() {
-        if (ex.strumChord != null) {
+        if (ex.freeCount > 0) { buildFreeStrum(); return; }
+        if (ex.strumChord != null && !ex.tapMode) {
             Views.Chord cv = new Views.Chord(ctx);
             cv.shape = Theory.shapeFor(ex.strumChord); cv.name = ex.strumChord;
             addView(cv);
@@ -605,26 +608,95 @@ public class ExerciseView extends LinearLayout {
         beats.gridState = new int[ex.hits.length];
         beats.centerText = Math.round(effectiveBpm()) + " BPM";
         addView(beats);
-        addView(Ui.text(ctx, "↓ aşağı vuruş, ↑ yukarı vuruş, • sus (çalma ama el sallanmaya devam etsin)", 13, Ui.MUTED, false));
-        addStatus("Hazır olunca Başla.");
-        addStartButton(() -> {
+        addView(Ui.text(ctx, ex.tapMode ? "↓ olan yerlerde dokun, • olan yerlerde dokunma." : "↓ aşağı vuruş, ↑ yukarı vuruş, • sus (çalma ama el sallanmaya devam etsin)", 13, Ui.MUTED, false));
+        addStatus(ex.tapMode ? "Başla'ya bas; metronom 1 ölçü sayacak, sonra dokunmaya başla." : "Hazır olunca Başla. Metronom önce 1 ölçü sayar.");
+        Button pad = null;
+        if (ex.tapMode) {
+            pad = Ui.button(ctx, "👆  DOKUN", Ui.PURPLE, Ui.darker(Ui.PURPLE, 0.7f));
+            pad.setTextSize(24);
+            pad.setEnabled(false);
+            final Button fpad = pad;
+            pad.setOnTouchListener((v, e) -> {
+                if (e.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                    long ago = (android.os.SystemClock.uptimeMillis() - e.getEventTime()) * 1_000_000L;
+                    rhythmOnset(System.nanoTime() - ago);
+                    fpad.animate().scaleX(0.92f).scaleY(0.92f).setDuration(50).withEndAction(() -> fpad.animate().scaleX(1).scaleY(1).setDuration(120).start()).start();
+                }
+                return true;
+            });
+            addView(pad, new LinearLayout.LayoutParams(Ui.MATCH, dp(150)));
+        }
+        final Button fpad2 = pad;
+        Runnable go = () -> {
             startMetronome(effectiveBpm());
+            onsetsHeard = 0;
             List<Long> ts = new ArrayList<>();
             List<Integer> idx = new ArrayList<>();
             double stepBeats = (double) ex.beatsPerBar / ex.grid;
-            for (int i = 0; i < ex.hits.length; i++) if (ex.hits[i]) { ts.add(beatT(i * stepBeats)); idx.add(i); }
+            // dokunmada mikrofon gecikmesi yok; yalnızca hoparlör gecikmesinin yaklaşık yarısı
+            long lat = ex.tapMode ? latencyNs() / 2 : latencyNs();
+            for (int i = 0; i < ex.hits.length; i++) if (ex.hits[i]) { ts.add(met.beatNanos(countIn + i * stepBeats) + lat); idx.add(i); }
             RT = new long[ts.size()]; rIdx = new int[ts.size()]; rHit = new boolean[ts.size()];
             for (int i = 0; i < RT.length; i++) { RT[i] = ts.get(i); rIdx[i] = idx.get(i); }
             double stepMs = stepBeats * 60000 / effectiveBpm();
-            rWin = (long) (Math.min(prog.timingWindowMs, stepMs * 0.45) * 1e6);
+            float tol = ex.tolMs > 0 ? ex.tolMs : (ex.tapMode ? Math.max(140, prog.timingWindowMs) : prog.timingWindowMs);
+            rWin = (long) (Math.min(tol, stepMs * 0.45) * 1e6);
             lastOnsetMatched = 0;
-            listen(new AudioIn.Listener() {
-                public void onFrame(long n, float m, float c, float db) {}
-                public void onNote(long n, float m, boolean a) {}
-                public void onOnset(long t, float db) { rhythmOnset(t); }
-            });
+            if (fpad2 != null) { fpad2.setEnabled(true); if (mascot != null) mascot.setMood(Art.Mascot.Mood.LISTEN); }
+            else {
+                AudioIn in = host.audio();
+                listen(new AudioIn.Listener() {
+                    public void onFrame(long n, float m, float c, float db) {}
+                    public void onNote(long n, float m, boolean a) {}
+                    public void onOnset(long t, float db) { onsetsHeard++; flashHeard(); rhythmOnset(t); }
+                });
+            }
             tickRhythm();
+        };
+        if (ex.tapMode) {
+            startBtn = Ui.primary(ctx, "▶  Başla");
+            startBtn.setOnClickListener(v -> { startBtn.setEnabled(false); startBtn.setAlpha(0.4f); go.run(); });
+            addView(startBtn, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 8, 0));
+        } else {
+            addStartButton(go);
+            addSkipMic();
+        }
+    }
+
+    private void flashHeard() {
+        if (heard == null) return;
+        heard.setText("🎤 vuruş duyuldu (" + onsetsHeard + ")");
+        heard.setTextColor(Ui.BLUE);
+        heard.animate().cancel();
+        heard.setAlpha(1f);
+        heard.animate().alpha(0.35f).setDuration(500).start();
+    }
+
+    /** Metronomsuz serbest vuruş: mikrofonun seni duyduğunu doğrular, hata yok. */
+    private void buildFreeStrum() {
+        Views.Ring ring = new Views.Ring(ctx);
+        ring.color = Ui.BLUE;
+        ring.label = "0 / " + ex.freeCount;
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(140), dp(140));
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        addView(ring, lp);
+        addStatus("🎤 Dinliyorum… telleri susturup vur");
+        onsetsHeard = 0;
+        listen(new AudioIn.Listener() {
+            public void onFrame(long n, float m, float c, float db) {}
+            public void onNote(long n, float m, boolean a) {}
+            public void onOnset(long t, float db) {
+                onsetsHeard++;
+                ring.value = (float) onsetsHeard / ex.freeCount;
+                ring.label = onsetsHeard + " / " + ex.freeCount;
+                ring.invalidate();
+                Ui.pop(ring);
+                if (mascot != null) mascot.pop();
+                if (onsetsHeard >= ex.freeCount) done(true, "Mikrofon vuruşlarını net duyuyor!");
+            }
         });
+        TextView hint = Ui.text(ctx, "Sayaç artmıyorsa telefonu gitara yaklaştır ya da Profil → Ayarlar → Mikrofon eşiğini düşür.", 13, Ui.MUTED, false);
+        addView(hint, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 10, 0));
         addSkipMic();
     }
 
@@ -656,10 +728,15 @@ public class ExerciseView extends LinearLayout {
         for (int i = 0; i < RT.length; i++) {
             if (!rHit[i]) {
                 all = false;
-                if (now > RT[i] + rWin + 140_000_000L) { beats.gridState[rIdx[i]] = 2; done(false, "Vuruşu kaçırdın"); return; }
+                if (now > RT[i] + rWin + (ex.tapMode ? 120_000_000L : 400_000_000L)) {
+                    beats.gridState[rIdx[i]] = 2;
+                    if (!ex.tapMode && onsetsHeard == 0) done(false, "Mikrofon hiç vuruş duymadı. Telefonu gitara yaklaştır, daha güçlü vur ya da Profil → Ayarlar → Mikrofon eşiğini düşür.");
+                    else done(false, "Vuruşu kaçırdın: " + (i + 1) + ". vuruş zamanında gelmedi");
+                    return;
+                }
             }
         }
-        if (all && now > RT[RT.length - 1] + rWin + 150_000_000L) { done(true, "Ritim tam oturdu!"); return; }
+        if (all && now > RT[RT.length - 1] + rWin + 200_000_000L) { done(true, "Ritim tam oturdu!"); return; }
         h.postDelayed(this::tickRhythm, 16);
     }
 
@@ -812,11 +889,11 @@ public class ExerciseView extends LinearLayout {
                 public void onFrame(long n, float m, float c, float db) {}
                 public void onNote(long n, float m, boolean a) {}
                 public void onOnset(long t, float db) {
-                    double k = (t - met.beatNanos(countIn)) / (double) period;
+                    double k = (t - met.beatNanos(countIn) - 150_000_000L) / (double) period;
                     long kk = Math.round(k);
                     if (kk < 0 || kk >= 8) return;
                     long off = t - met.beatNanos(countIn + kk);
-                    if (Math.abs(off) < 300_000_000L) { calOffsets.add(off); status.setText("Vuruş: " + calOffsets.size() + "/8"); }
+                    if (Math.abs(off) < 600_000_000L) { calOffsets.add(off); status.setText("Vuruş: " + calOffsets.size() + "/8"); }
                 }
             });
             tickCal();
@@ -833,7 +910,7 @@ public class ExerciseView extends LinearLayout {
         beats.beatPos = (float) (beat + countIn);
         beats.centerText = beat < 0 ? "Sayım: " + (int) Math.ceil(-beat) : "Vur!";
         beats.invalidate();
-        if (beat > 8.6) {
+        if (beat > 9.3) {
             if (calOffsets.size() >= 5) {
                 List<Long> s = new ArrayList<>(calOffsets);
                 java.util.Collections.sort(s);
