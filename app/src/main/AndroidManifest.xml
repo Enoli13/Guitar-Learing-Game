@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.enoli.perde"
-    android:versionCode="11"
-    android:versionName="1.5.2">
+    android:versionCode="12"
+    android:versionName="1.6.0">
 
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
 
@@ -24,7 +24,35 @@
             </intent-filter>
         </activity>
         <activity android:name=".LessonActivity" android:exported="false" android:screenOrientation="portrait" />
-        <activity android:name=".SongActivity" android:exported="false" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".SongActivity" android:exported="true" android:label="Perde'de çal" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="text/xml" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-guitar-pro" />
+                <data android:mimeType="application/x-gtp" />
+                <data android:mimeType="application/vnd.recordare.musicxml" />
+                <data android:mimeType="application/vnd.recordare.musicxml+xml" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/x-guitar-pro" />
+                <data android:mimeType="application/x-gtp" />
+                <data android:mimeType="application/vnd.recordare.musicxml" />
+                <data android:mimeType="application/vnd.recordare.musicxml+xml" />
+                <data android:mimeType="application/xml" />
+                <data android:mimeType="text/xml" />
+            </intent-filter>
+        </activity>
         <receiver android:name=".Reminder" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

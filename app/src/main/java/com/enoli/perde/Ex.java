@@ -63,6 +63,11 @@ public class Ex implements Cloneable {
     public int[] hitDisp;         // her vuruşun notasyondaki öğe indeksi
     public List<Views.RhythmNotation.Item> notation; // nota yazısı
     public String singLabel;      // SING: hedefin adı (ör. "Sol (5)")
+    public boolean songLane;      // şarkı: alttaki kayan şeritte nota/akor adları
+    public boolean scoreView;     // tab yerine porte (nota) göster
+    public float[] measureStarts; // şarkı bölümü: ölçü başları (vuruş)
+    public float[] measureLens;
+    public int firstMeasure = 1;
 
     // IMPROV
     public int[] allowedPcs;
@@ -80,6 +85,10 @@ public class Ex implements Cloneable {
         public boolean rest;
         public String label;            // ör. "h" hammer, "p" pull, "b" bend
         public int[] alts;              // akor sütunu: kabul edilen diğer perdeler
+        public int[] strs, frets;       // akor sütununun tüm telleri/perdeleri
+        public String chord;            // akor sözlüğünden ad (ör. "G5", "Am", "C/E"); null = tek nota
+        public int[] chordPcs;
+        public boolean power;
         public Note(int s, int f, float beat, float dur) {
             string = s; fret = f; this.beat = beat; this.dur = dur;
             midi = s > 0 && f >= 0 ? Theory.OPEN[s] + f : -1;

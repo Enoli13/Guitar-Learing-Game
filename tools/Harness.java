@@ -298,6 +298,44 @@ public class Harness {
         for (int[] q : Gen.positionNotes(Theory.scalePcs("C:major"), 0, 4)) sb.append(q[0]).append(":").append(q[1]).append(" ");
         System.out.println("C majör açık: " + sb);
 
+
+        // 8) Akor sözlüğü
+        String[][] cd = {{"40,47,52", "E5"}, {"43,47,50,55,59,67", "G"}, {"45,52,57,60,64", "Am"}, {"52,55,60,64", "C/E"}, {"40,47,52,56,59,64", "E"},
+                {"45,52,55,60,64", "Am7"}, {"48,52,55,59", "Cmaj7"}, {"50,57,62,65", "Dm"}, {"52,57,60", "Am/E"}, {"43,50", "G5"}};
+        for (String[] q : cd) {
+            String[] qa = q[0].split(","); int[] m = new int[qa.length];
+            for (int i = 0; i < qa.length; i++) m[i] = Integer.parseInt(qa[i]);
+            ChordDict.Match mt = ChordDict.identify(m);
+            check(mt != null && mt.name.equals(q[1]), "akor sözlüğü " + q[0] + " -> " + (mt == null ? "null" : mt.name) + " (beklenen " + q[1] + ")");
+        }
+        check(ChordDict.identify(new int[]{60, 64}) == null, "üçlü çift ses akor sayılmamalı");
+        // akor sütunlu ASCII tab: adlandırma + akort etiketi
+        String ct = "e|-------0-------|\nB|-------1---1---|\nG|-------0---2---|\nD|-2-----2---2---|\nA|-0-----3---0---|\nD|-0-----------0-|\n";
+        TabImport.Result cr = TabImport.parse(ct, 4);
+        System.out.println("Akorlu tab: " + cr.notes.size() + " vuruş, akorlar=" + cr.chordCount() + " akort=" + TabImport.tuningName(cr.tuning));
+        check(cr.tuning[6] == 38, "drop D etiketi okunmalı");
+        check(cr.notes.size() == 4 && cr.notes.get(1).chord != null && cr.notes.get(1).chord.equals("C"), "akor sütunu adlandırılmalı: " + (cr.notes.size() > 1 ? cr.notes.get(1).chord : ""));
+        // kaydet / geri yükle
+        TabImport.Result rt = TabImport.fromText(TabImport.toText(cr));
+        check(rt.notes.size() == cr.notes.size() && rt.tuning[6] == 38 && "C".equals(rt.notes.get(1).chord), "#perde1 gidiş-dönüş");
+        // MusicXML
+        String mx = "<?xml version=\"1.0\"?><!DOCTYPE score-partwise PUBLIC \"x\" \"http://www.musicxml.org/dtds/partwise.dtd\"><score-partwise><work><work-title>Deneme</work-title></work>"
+                + "<part-list><score-part id=\"P1\"><part-name>Gitar</part-name></score-part></part-list><part id=\"P1\"><measure number=\"1\">"
+                + "<attributes><divisions>2</divisions><time><beats>4</beats><beat-type>4</beat-type></time><transpose><chromatic>0</chromatic><octave-change>-1</octave-change></transpose></attributes>"
+                + "<note><pitch><step>E</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice></note>"
+                + "<note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration><voice>1</voice><notations><technical><string>3</string><fret>0</fret></technical></notations></note>"
+                + "<note><rest/><duration>1</duration><voice>1</voice></note>"
+                + "<note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice></note>"
+                + "<note><chord/><pitch><step>E</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice></note>"
+                + "<note><chord/><pitch><step>G</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice></note>"
+                + "</measure></part></score-partwise>";
+        TabImport.Result xr = TabImport.parseAny(mx);
+        System.out.print("MusicXML: " + xr.error + " ");
+        for (Ex.Note n : xr.notes) System.out.print(n.string + ":" + n.fret + "@" + n.beat + "/" + n.dur + (n.chord != null ? "[" + n.chord + "]" : "") + " ");
+        System.out.println();
+        check(xr.error == null && xr.notes.size() == 3, "MusicXML nota sayısı");
+        check(xr.notes.size() == 3 && xr.notes.get(0).midi == 52 && xr.notes.get(1).string == 3 && xr.notes.get(1).fret == 0 && Math.abs(xr.notes.get(2).beat - 2) < 0.01f, "MusicXML perde/zaman");
+        check(xr.notes.size() == 3 && "C".equals(xr.notes.get(2).chord), "MusicXML akor adı");
         System.out.println(fails == 0 ? "TÜM TESTLER GEÇTİ" : fails + " HATA");
         System.exit(fails == 0 ? 0 : 1);
     }

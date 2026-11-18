@@ -621,7 +621,7 @@ public final class Views {
 
     // ======================= ZAMAN ŞERİDİ (kayan, süreleri gösteren bloklar) =======================
     public static class Timeline extends View {
-        public static class Block { public float start, dur; public boolean rest; public String label = ""; }
+        public static class Block { public float start, dur; public boolean rest, chord; public String label = "", sub; }
         public final List<Block> blocks = new ArrayList<>();
         public int[] state = new int[0];          // 0 bekliyor, 1 doğru, 2 yanlış
         public float beatPos = -8;                // 1. vuruşa göre (sayımda negatif)
@@ -686,7 +686,12 @@ public final class Views {
                 c.drawRect(x0, laneTop, x0 + 4 * d, laneBot, p);          // başlangıç kenarı: vurulacak an
                 p.setColor(st == 1 ? Ui.GREEN : st == 2 ? Ui.RED : 0xFF9BB3C4);
                 p.setTextAlign(Paint.Align.LEFT); p.setTextSize(15 * d); p.setTypeface(Typeface.DEFAULT_BOLD);
+                if (bl.chord) { p.setColor(st == 1 ? Ui.GREEN : st == 2 ? Ui.RED : 0xFFE7C8FF); }
                 if (r.width() > 24 * d) c.drawText(bl.label, x0 + 10 * d, laneBot - 12 * d, p);
+                if (bl.sub != null && !bl.sub.isEmpty() && r.width() > 40 * d) {
+                    p.setTypeface(Typeface.DEFAULT); p.setTextSize(11 * d); p.setColor(0xFF7F8AA0);
+                    c.drawText(bl.sub, x0 + 10 * d, laneTop + 18 * d, p);
+                }
                 p.setTextAlign(Paint.Align.CENTER);
             }
             // vuruş işaretleri (erken/geç görsel geri bildirim)

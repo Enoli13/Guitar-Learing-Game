@@ -26,7 +26,15 @@ Her ünite, onu zaten biliyorsan **sınavla atlanabilir**.
 XP ve seviyeler (Çırak → Efsane), günlük hedef halkası, seri (🔥) ve seri dondurucu, değişken ödüllü sandıklar, 22 rozet, pena (🎸) ile dükkân, ders yıldızları, günlük hatırlatma bildirimi. Tasarım; Octalysis, Hook modeli (tetikleyici → eylem → değişken ödül → yatırım) ve Tiny Habits (küçük başla, anında kutla) ilkelerine dayanır.
 
 ### 🎵 Şarkı Yolu
-Nirvana, Guns N' Roses ve Eric Clapton'dan 18 şarkı, zorluk sırasıyla. Her şarkı için gereken dersler gösterilir; hepsi bitince **"Hazırsın"**. Telif hakkı nedeniyle şarkıların tab'ları uygulamada yoktur: Ultimate Guitar ya da Songsterr'den kopyaladığın **ASCII tab'ı yapıştırırsın**, uygulama onu ölçü ölçü, mikrofonla kontrol edilen bir pratik görevine çevirir (bekleme modu veya metronomlu tempo modu).
+Nirvana, Guns N' Roses ve Eric Clapton'dan 18 şarkı, zorluk sırasıyla. Her şarkı için gereken dersler gösterilir; hepsi bitince **"Hazırsın"**. Telif hakkı nedeniyle şarkıların tab'ları uygulamada yoktur; kendin getirirsin:
+
+- **Dosyadan:** Guitar Pro (.gp, .gp5, .gp4, .gp3) ve MusicXML (.musicxml, .mxl, .xml). Ritim, akort ve teknikler (bend, hammer-on, slide) dosyadan okunur; birden çok parça varsa hangisini çalacağını seçersin. Başka uygulamadan "Paylaş → Perde" de çalışır.
+- **Metinden:** ASCII tab'ı yapıştır ya da elle yaz (tel etiketlerinden akort da okunur).
+
+**Akor sözlüğü:** aynı anda basılan sesler akor ise (power chord, majör/minör, 7'li, sus, add9, çevrimler "C/E" ...) tab'daki perde sütunu silinir, yerine akorun adı yazılır. Akorlar pratikte de bütün olarak (kroma ile) kontrol edilir.
+**Notaya çevir:** tek sesler sol anahtarlı porteye (gitar 8'i ile) ritim değerleriyle yazılır; akorlar portenin üstünde adıyla ve ritim çizgisiyle gösterilir. İstersen nota adları altına yazılır.
+
+Her bölüm RitimKulak yöntemiyle öğretilir: **dinle → ritmi dokun → notaları bul (bekleme modu) → tempoda çal**. Alttaki kayan şeritte çalacağın her nota adıyla (ve tel/perdesiyle), akorlar adıyla gelir; tempoda çal adımında temiz geçince tempo 5 BPM artar.
 
 ## Kurulum
 **[Perde.apk dosyasını indir](apk/Perde.apk)** (ya da [Releases](../../releases) sayfasından) ve telefonuna kur (Android 8.0+). İlk açılışta mikrofon ve bildirim izni istenir.

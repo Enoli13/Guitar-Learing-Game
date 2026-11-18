@@ -330,7 +330,7 @@ public class MainActivity extends Activity {
             card.setOnClickListener(v -> SongActivity.open(this, null, String.valueOf(k)));
             col.addView(card, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 4, 4));
         }
-        Button add = Ui.secondary(this, "+ Şarkı ekle (tab yapıştır)");
+        Button add = Ui.secondary(this, "+ Şarkı ekle (Guitar Pro / MusicXML / tab)");
         add.setOnClickListener(v -> {
             EditText et = new EditText(this);
             et.setHint("Şarkı adı");
