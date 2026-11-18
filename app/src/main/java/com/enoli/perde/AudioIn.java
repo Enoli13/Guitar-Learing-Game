@@ -97,7 +97,10 @@ public class AudioIn {
     private float candMidi = -1; private int stableCount = 0; private long stableStart = 0;
     private boolean noteActive = false; private float activeMidi = -1;
     public volatile float onsetSensitivity = 1f;
-    public static java.util.function.Consumer<float[]> debug; // >1 daha az hassas
+    public static java.util.function.Consumer<float[]> debug;
+    /** Döngü (loopback) kalibrasyonu: hoparlörden çıkan tıkı örnek hassasiyetinde yakalar. */
+    public volatile boolean loopbackMode;
+    private float lbNoise = 1e-4f; private long lbLast = -1_000_000; // >1 daha az hassas
     // spektral akı
     private static final int FN = 1024;
     private final float[] fre = new float[FN], fim = new float[FN], prevMag = new float[FN / 2], win = new float[FN];
@@ -157,6 +160,24 @@ public class AudioIn {
             totalSamples += r;
         }
         float db = (float) (10 * Math.log10(e / r + 1e-12));
+        if (loopbackMode) {
+            float rms = (float) Math.sqrt(e / r);
+            long blockStart = totalSamples - r;
+            float thr = Math.max(lbNoise * 8, 0.02f);
+            if (blockStart - lbLast > SR / 5) {
+                int mask = ring.length - 1;
+                for (int i = 0; i < r; i++) {
+                    if (Math.abs(ring[(int) ((blockStart + i) & mask)]) > thr) {
+                        lbLast = blockStart + i;
+                        Listener ll = listener;
+                        if (ll != null) ll.onOnset(sampleToNanos(blockStart + i), db);
+                        break;
+                    }
+                }
+            }
+            if (blockStart - lbLast > SR / 10) lbNoise = rms < lbNoise ? rms : lbNoise * 0.995f + rms * 0.005f;
+            return;
+        }
         if (db < noiseDb) noiseDb = noiseDb * 0.9f + db * 0.1f; else noiseDb += 0.01f;
         float gate = Math.max(noiseDb + 10, -60) + sensitivityDb;
         Listener l = listener;

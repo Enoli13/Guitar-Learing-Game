@@ -32,6 +32,7 @@ public class Progress {
     // ayarlar
     public float latencyMs = 0;
     public boolean calibrated = false;
+    public int calibVersion = 0; // 2 = hoparlör-mikrofon döngüsüyle otomatik ölçüm
     public float micSensitivity = 0;
     public boolean metronomeAudible = true;
     public boolean strictOctave = false;
@@ -220,7 +221,7 @@ public class Progress {
             o.put("freezes", freezes); o.put("dailyGoal", dailyGoal); o.put("todayXp", todayXp); o.put("todayDay", todayDay);
             o.put("lastActiveDay", lastActiveDay); o.put("boostUntil", boostUntil); o.put("reviewsDone", reviewsDone);
             o.put("perfectLessons", perfectLessons); o.put("chestsOpened", chestsOpened);
-            o.put("latencyMs", latencyMs); o.put("calibrated", calibrated); o.put("micSensitivity", micSensitivity);
+            o.put("latencyMs", latencyMs); o.put("calibrated", calibrated); o.put("calibVersion", calibVersion); o.put("micSensitivity", micSensitivity);
             o.put("metronomeAudible", metronomeAudible); o.put("strictOctave", strictOctave); o.put("reminderOn", reminderOn);
             o.put("reminderHour", reminderHour); o.put("reminderMinute", reminderMinute); o.put("onboarded", onboarded);
             o.put("timingWindowMs", timingWindowMs); o.put("sfxOn", sfxOn);
@@ -256,7 +257,8 @@ public class Progress {
             freezes = o.optInt("freezes"); dailyGoal = o.optInt("dailyGoal", 30); todayXp = o.optInt("todayXp"); todayDay = o.optLong("todayDay", -1);
             lastActiveDay = o.optLong("lastActiveDay", -1); boostUntil = o.optLong("boostUntil"); reviewsDone = o.optInt("reviewsDone");
             perfectLessons = o.optInt("perfectLessons"); chestsOpened = o.optInt("chestsOpened");
-            latencyMs = (float) o.optDouble("latencyMs", 0); calibrated = o.optBoolean("calibrated"); micSensitivity = (float) o.optDouble("micSensitivity", 0);
+            latencyMs = (float) o.optDouble("latencyMs", 0); calibrated = o.optBoolean("calibrated"); calibVersion = o.optInt("calibVersion", 0);
+            if (calibVersion < 2) { calibrated = false; latencyMs = 0; } // eski (insan vuruşuna dayalı) ölçüm güvenilmez micSensitivity = (float) o.optDouble("micSensitivity", 0);
             metronomeAudible = o.optBoolean("metronomeAudible", true); strictOctave = o.optBoolean("strictOctave"); reminderOn = o.optBoolean("reminderOn", true);
             reminderHour = o.optInt("reminderHour", 19); reminderMinute = o.optInt("reminderMinute", 0); onboarded = o.optBoolean("onboarded");
             timingWindowMs = 130; // sabit, ayarlanamaz sfxOn = o.optBoolean("sfxOn", true);

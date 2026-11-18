@@ -85,7 +85,7 @@ public class ExerciseView extends LinearLayout {
         running = false;
         h.removeCallbacksAndMessages(null);
         if (met != null) { met.stop(); met = null; }
-        if (host != null && host.audio() != null) host.audio().setListener(null);
+        if (host != null && host.audio() != null) { host.audio().setListener(null); host.audio().loopbackMode = false; }
         AudioOut.stopPlayback();
     }
 
@@ -1136,52 +1136,68 @@ public class ExerciseView extends LinearLayout {
     // ------------------------------------------------------------------ KALİBRASYON
     private final List<Long> calOffsets = new ArrayList<>();
 
+    private boolean calLoopback;
+
     private void buildCalibrate() {
         ex.beatsPerBar = 4;
         beats = new Views.Beats(ctx);
         beats.beatsPerBar = 4;
         addView(beats);
-        addView(Ui.text(ctx, "Telleri susturup her metronom tıkında bir kez vur (8 vuruş). Uygulama ses gecikmesini ölçecek.", 15, Ui.TEXT, false));
+        addView(Ui.text(ctx, "Telefon kendi hoparlöründen tık çalıp kendi mikrofonuyla dinleyecek ve ses gecikmesini ölçecek. Senin bir şey yapmana gerek yok.\n\n• Kulaklığı çıkar, sesi orta-yüksek seviyeye getir.\n• Ölçüm sırasında sessiz ol (yaklaşık 10 saniye).", 15, Ui.TEXT, false));
         addStatus("Hazır olunca Başla.");
-        addStartButton(() -> {
-            calOffsets.clear();
-            startMetronome(80);
-            final long period = (long) (60e9 / 80);
-            listen(new AudioIn.Listener() {
-                public void onFrame(long n, float m, float c, float db) {}
-                public void onNote(long n, float m, boolean a) {}
-                public void onOnset(long t, float db) {
-                    double k = (t - met.beatNanos(countIn) - 150_000_000L) / (double) period;
-                    long kk = Math.round(k);
-                    if (kk < 0 || kk >= 8) return;
-                    long off = t - met.beatNanos(countIn + kk);
-                    if (Math.abs(off) < 600_000_000L) { calOffsets.add(off); status.setText("Vuruş: " + calOffsets.size() + "/8"); }
-                }
-            });
-            tickCal();
-        });
+        addStartButton(() -> startCal(true));
+        Button manual = Ui.secondary(ctx, "Kulaklık takılı: elle ayarla (tıkta vur)");
+        manual.setOnClickListener(v -> { manual.setEnabled(false); if (startBtn != null) { startBtn.setEnabled(false); startBtn.setAlpha(0.4f); } host.withMic(() -> startCal(false)); });
+        addView(manual, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 10, 0));
         Button skip = Ui.secondary(ctx, "Şimdilik atla");
         skip.setOnClickListener(v -> done(true, null));
         addView(skip, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 10, 0));
     }
 
+    private void startCal(boolean loopback) {
+        calLoopback = loopback;
+        calOffsets.clear();
+        startMetronome(loopback ? 60 : 80);
+        met.audible = true;
+        final long period = (long) (60e9 / met.bpm());
+        status.setText(loopback ? "Ölçülüyor… sessiz ol" : "Her tıkta telleri susturup vur");
+        listen(new AudioIn.Listener() {
+            public void onFrame(long n, float m, float c, float db) {}
+            public void onNote(long n, float m, boolean a) {}
+            public void onOnset(long t, float db) {
+                long kk = Math.round((t - met.beatNanos(0) - 100_000_000L) / (double) period);
+                if (kk < (loopback ? 0 : countIn) || kk >= countIn + 8) return;
+                long off = t - met.beatNanos(kk);
+                if (off > -300_000_000L && off < 600_000_000L) { calOffsets.add(off); status.setText((loopback ? "Tık duyuldu: " : "Vuruş: ") + calOffsets.size()); }
+            }
+        });
+        host.audio().loopbackMode = loopback;
+        tickCal();
+    }
+
     private void tickCal() {
         if (!running || finished) return;
         long now = System.nanoTime();
-        double beat = (now - met.beatNanos(countIn)) / (60e9 / 80);
+        double beat = (now - met.beatNanos(countIn)) / (60e9 / met.bpm());
         beats.beatPos = (float) (beat + countIn);
-        beats.centerText = phaseText(beat, "Vur!");
+        beats.centerText = calLoopback ? "Ölçülüyor…" : phaseText(beat, "Vur!");
         beats.invalidate();
-        if (beat > 9.3) {
-            if (calOffsets.size() >= 5) {
-                List<Long> s = new ArrayList<>(calOffsets);
-                java.util.Collections.sort(s);
+        if (beat > 8.6) {
+            host.audio().loopbackMode = false;
+            List<Long> s = new ArrayList<>(calOffsets);
+            java.util.Collections.sort(s);
+            int need = calLoopback ? 8 : 5;
+            boolean consistent = s.size() >= need && (s.get(s.size() * 3 / 4) - s.get(s.size() / 4)) < (calLoopback ? 40_000_000L : 120_000_000L);
+            if (consistent) {
                 long med = s.get(s.size() / 2);
-                prog.latencyMs = med / 1e6f;
+                prog.latencyMs = Math.max(-150, Math.min(350, med / 1e6f));
                 prog.calibrated = true;
+                prog.calibVersion = 2;
                 prog.save();
-                done(true, "Gecikme: " + Math.round(prog.latencyMs) + " ms olarak ayarlandı");
-            } else done(false, "Yeterli vuruş duyulmadı (" + calOffsets.size() + "/8). Daha güçlü vur ya da telefonu yaklaştır.");
+                done(true, "Ses gecikmesi " + Math.round(prog.latencyMs) + " ms olarak ölçüldü ve ayarlandı.");
+            } else if (calLoopback) {
+                done(false, "Telefon kendi tıkını net duyamadı (" + s.size() + " tık). Kulaklığı çıkar, sesi aç ve tekrar dene; kulaklıkla çalışıyorsan \"elle ayarla\"yı seç.");
+            } else done(false, "Vuruşlar tutarlı değil (" + s.size() + "/8). Tıkla aynı anda, kısa ve net vur.");
             return;
         }
         h.postDelayed(this::tickCal, 16);

@@ -225,6 +225,36 @@ public class Harness {
             check(allF[0] > 50 && okF[0] >= allF[0] * 0.9, "şarkı söyleme perde tespiti");
         }
 
+        // 4d) Döngü kalibrasyonu: hoparlör tıkı mikrofonda örnek hassasiyetinde yakalanmalı
+        {
+            float[] sig = new float[44100 * 6];
+            Random rq = new Random(2);
+            for (int i = 0; i < sig.length; i++) sig[i] = (rq.nextFloat() - 0.5f) * 0.004f; // oda gürültüsü
+            double delay = 0.037; // 37 ms sistem gecikmesi
+            List<Double> clicks = new ArrayList<>();
+            for (int k = 0; k < 10; k++) {
+                double t0 = 0.5 + k * 0.5 + delay;
+                clicks.add(t0);
+                int off = (int) Math.round(t0 * 44100);
+                for (int i = 0; i < 882; i++) sig[off + i] += (float) (0.12 * Math.exp(-i / 176.0) * Math.sin(2 * Math.PI * 2600 * i / 44100));
+            }
+            AudioIn in3 = new AudioIn();
+            List<Long> got = new ArrayList<>();
+            in3.setListener(new AudioIn.Listener() {
+                public void onFrame(long n, float m, float c, float db) {}
+                public void onNote(long n, float m, boolean a) {}
+                public void onOnset(long t, float db) { got.add(t); }
+            });
+            in3.resetAnalysis(0);
+            in3.loopbackMode = true;
+            short[] b3 = new short[256];
+            for (int i = 0; i + 256 <= sig.length; i += 256) { for (int k = 0; k < 256; k++) b3[k] = (short) (sig[i + k] * 32767); in3.process(b3, 256); }
+            double lbErr = 0; int found = 0;
+            for (double c0 : clicks) for (long t : got) if (Math.abs(t / 1e9 - c0) < 0.02) { found++; lbErr = Math.max(lbErr, Math.abs(t / 1e9 - c0)); break; }
+            System.out.println("Döngü kalibrasyonu: " + found + "/" + clicks.size() + " tık, maks hata " + Math.round(lbErr * 1e6) / 1000.0 + " ms (toplam " + got.size() + ")");
+            check(found == clicks.size() && lbErr < 0.002 && got.size() == clicks.size(), "döngü kalibrasyonu");
+        }
+
         // 5) Akor tanıma
         String[] chords = {"Em", "E", "Am", "A", "D", "Dm", "G", "C", "F", "Bm", "E5", "A5", "G5@6", "E7", "Cmaj7", "Dsus4", "Am7"};
         int chordOk = 0;

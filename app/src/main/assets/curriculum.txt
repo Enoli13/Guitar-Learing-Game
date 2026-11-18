@@ -20,7 +20,7 @@ g: playnote s=6 f=1-3 len=3
 ## u01c | Akort ve gecikme ayarı
 > Akortsuz gitarla yapılan pratik kulağını bozar. Uygulamanın akort aleti mikrofonla teli dinler; ibre ortadaysa tel doğrudur. Burguyu çevirirken teli sürekli çal ve yavaşça yaklaş; hedefi geçtiysen biraz gevşet, aşağıdan yukarı tekrar gel.
 > ---
-> Zamanlama görevlerinde telefonun hoparlörü ve mikrofonu birkaç on milisaniye gecikir. Şimdi metronomla birlikte vuruş yapacaksın; uygulama bu gecikmeyi ölçüp sonraki tüm ritim görevlerinde düzeltecek. En iyi sonuç için kulaklık tak ya da telefonu gitarın yakınına koy.
+> Zamanlama görevlerinde telefonun hoparlörü ve mikrofonu birkaç on milisaniye gecikir. Şimdi telefon kendi hoparlöründen tık çalıp kendi mikrofonuyla dinleyerek bu gecikmeyi ölçecek; sonraki tüm ritim görevlerinde otomatik düzeltilecek. Ölçüm sırasında kulaklığı çıkar ve sessiz ol.
 g: tune
 g: calibrate
 ## u01d | Açık teller
