@@ -618,6 +618,100 @@ public final class Views {
         }
     }
 
+
+    // ======================= ZAMAN ŞERİDİ (kayan, süreleri gösteren bloklar) =======================
+    public static class Timeline extends View {
+        public static class Block { public float start, dur; public boolean rest; public String label = ""; }
+        public final List<Block> blocks = new ArrayList<>();
+        public int[] state = new int[0];          // 0 bekliyor, 1 doğru, 2 yanlış
+        public float beatPos = -8;                // 1. vuruşa göre (sayımda negatif)
+        public int beatsPerBar = 4, countIn = 4;
+        public boolean silent;                    // metronom sustu: sayılar gizlenir
+        public String bigText;                    // geri sayım vb. (null = sayım rakamı)
+        public boolean started;
+        private final List<float[]> taps = new ArrayList<>(); // {vuruş, doğru mu}
+        private final Paint p = paint(0);
+        private final float d;
+        public Timeline(Context c) { super(c); d = c.getResources().getDisplayMetrics().density; }
+
+        public void setBlocks(List<Block> b) { blocks.clear(); blocks.addAll(b); state = new int[b.size()]; taps.clear(); invalidate(); }
+        public void addTap(float beat, boolean ok) { taps.add(new float[]{beat, ok ? 1 : 0}); if (taps.size() > 40) taps.remove(0); invalidate(); }
+
+        @Override protected void onMeasure(int w, int h) { setMeasuredDimension(MeasureSpec.getSize(w), (int) (190 * d)); }
+
+        private int countNum(float b) { int n = (int) Math.floor(b); return ((n % beatsPerBar) + beatsPerBar) % beatsPerBar + 1; }
+
+        @Override protected void onDraw(Canvas c) {
+            float W = getWidth(), H = getHeight();
+            float pxb = W / 4.6f;
+            float playX = W * 0.27f;
+            float pos = started ? beatPos : -0.6f; // başlamadan kalıbın başını göster
+            float top = 36 * d, laneTop = 54 * d, laneBot = H - 18 * d;
+            p.setColor(Ui.SURFACE); c.drawRoundRect(new RectF(0, 0, W, H), 16 * d, 16 * d, p);
+            // vuruş çizgileri ve sayılar
+            int from = (int) Math.floor(pos - playX / pxb) - 1, to = (int) Math.ceil(pos + (W - playX) / pxb) + 1;
+            p.setTextAlign(Paint.Align.CENTER);
+            for (int b = Math.max(from, -countIn); b <= to; b++) {
+                float x = playX + (b - pos) * pxb;
+                boolean bar = ((b % beatsPerBar) + beatsPerBar) % beatsPerBar == 0;
+                p.setColor(bar ? 0xFF4A5068 : 0xFF2C3043);
+                p.setStrokeWidth((bar ? 2.2f : 1f) * d);
+                c.drawLine(x, laneTop - 6 * d, x, laneBot, p);
+                if (silent && b >= 0) continue;
+                p.setColor(b < 0 ? 0xFF6A6F86 : Ui.MUTED);
+                p.setTextSize(12 * d); p.setTypeface(Typeface.DEFAULT);
+                c.drawText(String.valueOf(countNum(b)), x, 16 * d, p);
+                p.setColor(Math.abs(b - pos) < 0.25f ? Ui.PINK : 0xFF6A6F86);
+                c.drawCircle(x, 28 * d, (Math.abs(b - pos) < 0.25f ? 5 : 3.5f) * d, p);
+            }
+            // nota blokları
+            for (int i = 0; i < blocks.size(); i++) {
+                Block bl = blocks.get(i);
+                float x0 = playX + (bl.start - pos) * pxb, x1 = playX + (bl.start + bl.dur - pos) * pxb - 4 * d;
+                if (x1 < 0 || x0 > W) continue;
+                RectF r = new RectF(x0, laneTop, Math.max(x0 + 6 * d, x1), laneBot);
+                if (bl.rest) {
+                    p.setColor(0x22FFFFFF);
+                    p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1.2f * d);
+                    c.drawRoundRect(r, 8 * d, 8 * d, p);
+                    p.setStyle(Paint.Style.FILL);
+                    p.setColor(0xFF6A6F86); p.setTextSize(12 * d);
+                    c.drawText("sus", (r.left + r.right) / 2, (laneTop + laneBot) / 2 + 4 * d, p);
+                    continue;
+                }
+                int st = i < state.length ? state[i] : 0;
+                p.setColor(st == 1 ? 0xFF1F4A1A : st == 2 ? 0xFF4A1A1A : 0xFF173041);
+                c.drawRoundRect(r, 8 * d, 8 * d, p);
+                p.setColor(st == 1 ? Ui.GREEN : st == 2 ? Ui.RED : 0xFF2A8FB8);
+                c.drawRect(x0, laneTop, x0 + 4 * d, laneBot, p);          // başlangıç kenarı: vurulacak an
+                p.setColor(st == 1 ? Ui.GREEN : st == 2 ? Ui.RED : 0xFF9BB3C4);
+                p.setTextAlign(Paint.Align.LEFT); p.setTextSize(15 * d); p.setTypeface(Typeface.DEFAULT_BOLD);
+                if (r.width() > 24 * d) c.drawText(bl.label, x0 + 10 * d, laneBot - 12 * d, p);
+                p.setTextAlign(Paint.Align.CENTER);
+            }
+            // vuruş işaretleri (erken/geç görsel geri bildirim)
+            for (float[] tp : taps) {
+                float x = playX + (tp[0] - pos) * pxb;
+                if (x < 0 || x > W) continue;
+                p.setColor(tp[1] > 0 ? Ui.GREEN : Ui.RED);
+                p.setStrokeWidth(3 * d);
+                c.drawLine(x, laneTop - 4 * d, x, laneTop + 16 * d, p);
+            }
+            // büyük sayım / geri sayım
+            String big = bigText != null ? bigText : silent && pos >= 0 ? "🤫" : (started ? String.valueOf(countNum(pos)) : "");
+            if (!big.isEmpty()) {
+                p.setTypeface(Typeface.DEFAULT_BOLD);
+                p.setTextSize((big.length() <= 2 ? 64 : 30) * d);
+                p.setColor(bigText != null ? 0xDDFF9600 : pos < 0 ? 0xCC9AA0B5 : 0xEEFFFFFF);
+                c.drawText(big, W * 0.5f, (laneTop + laneBot) / 2 + 22 * d, p);
+            }
+            // oynatma çizgisi
+            p.setColor(Ui.PINK); p.setStrokeWidth(3 * d);
+            c.drawLine(playX, 6 * d, playX, H - 6 * d, p);
+            p.setTypeface(Typeface.DEFAULT);
+        }
+    }
+
     public static Path star(float cx, float cy, float r) {
         Path path = new Path();
         for (int i = 0; i < 10; i++) {

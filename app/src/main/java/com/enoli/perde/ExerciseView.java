@@ -688,6 +688,48 @@ public class ExerciseView extends LinearLayout {
     private Track main, pulse;     // main: kalıp (mikrofon ya da dokunma); pulse: iki parçalı egzersizde dokunulan nabız
     private int onsetsHeard;
     private Views.RhythmNotation notation;
+    private Views.Timeline timeline;
+
+    /** Ritmik konumun sayım adı: 1, 2, ... ; yarım vuruş "ve"; çeyrekler "·". */
+    private String countLabel(double b) {
+        double f = b - Math.floor(b + 1e-6);
+        int n = (int) Math.floor(b + 1e-6) % ex.beatsPerBar + 1;
+        if (f < 0.02) return String.valueOf(n);
+        if (Math.abs(f - 0.5) < 0.02) return "ve";
+        if (Math.abs(f - 1 / 3.0) < 0.03 || Math.abs(f - 2 / 3.0) < 0.03) return "lu";
+        return "·";
+    }
+
+    /** Ritim görevinin bloklarını (süreleriyle) hazırlar. disp listesi blok indeksini döner. */
+    private List<Views.Timeline.Block> rhythmBlocks(List<Double> bs, List<Integer> disp) {
+        List<Views.Timeline.Block> out = new ArrayList<>();
+        if (ex.hitBeats != null && ex.notation != null) {
+            for (int i = 0; i < ex.notation.size(); i++) {
+                Views.RhythmNotation.Item it = ex.notation.get(i);
+                Views.Timeline.Block b = new Views.Timeline.Block();
+                b.start = it.beat; b.dur = it.dur; b.rest = it.rest; b.label = it.rest ? "" : countLabel(it.beat);
+                out.add(b);
+            }
+            for (int i = 0; i < ex.hitBeats.length; i++) { bs.add((double) ex.hitBeats[i]); disp.add(ex.hitDisp[i]); }
+            return out;
+        }
+        double step = (double) ex.beatsPerBar / ex.grid;
+        double end = ex.hits.length * step;
+        List<Integer> on = new ArrayList<>();
+        for (int i = 0; i < ex.hits.length; i++) if (ex.hits[i]) on.add(i);
+        for (int k = 0; k < on.size(); k++) {
+            int i = on.get(k);
+            double st = i * step, en = k + 1 < on.size() ? on.get(k + 1) * step : end;
+            Views.Timeline.Block b = new Views.Timeline.Block();
+            b.start = (float) st; b.dur = (float) (en - st);
+            char ch = ex.rhythmText != null && i < ex.rhythmText.length() ? ex.rhythmText.charAt(i) : 'D';
+            String arrow = ex.tapMode || ex.voice ? "" : ch == 'U' ? "↑ " : ch == 'X' || ch == 'x' ? "× " : "↓ ";
+            b.label = arrow + countLabel(st);
+            out.add(b);
+            bs.add(st); disp.add(k);
+        }
+        return out;
+    }
 
     private Track makeTrack(List<Double> bs, List<Integer> disp, boolean tap, float tolMs, double minGapBeats) {
         Track t = new Track();
@@ -703,7 +745,7 @@ public class ExerciseView extends LinearLayout {
     private void markDisp(Track t, int i, int st) {
         if (t == pulse) return;
         if (notation != null) { if (t.disp[i] < notation.state.length) notation.state[t.disp[i]] = st; notation.invalidate(); }
-        else if (beats != null && beats.gridState != null) { beats.gridState[t.disp[i]] = st; beats.invalidate(); }
+        if (timeline != null && t.disp[i] < timeline.state.length) { timeline.state[t.disp[i]] = st; timeline.invalidate(); }
     }
 
     private void buildRhythm() {
@@ -715,12 +757,6 @@ public class ExerciseView extends LinearLayout {
         }
         beats = new Views.Beats(ctx);
         beats.beatsPerBar = ex.beatsPerBar;
-        if (ex.notation == null) {
-            beats.grid = ex.hits;
-            beats.stepsPerBar = ex.grid;
-            beats.rhythmText = ex.rhythmText;
-            beats.gridState = new int[ex.hits.length];
-        }
         beats.centerText = Math.round(effectiveBpm()) + " BPM";
         addView(beats);
         if (ex.notation != null) {
@@ -728,6 +764,11 @@ public class ExerciseView extends LinearLayout {
             notation.set(ex.notation, ex.beatsPerBar);
             addView(notation);
         }
+        timeline = new Views.Timeline(ctx);
+        timeline.beatsPerBar = ex.beatsPerBar;
+        timeline.countIn = ex.beatsPerBar * (effectiveBpm() <= 80 ? 2 : 1);
+        timeline.setBlocks(rhythmBlocks(new ArrayList<>(), new ArrayList<>()));
+        addView(timeline, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 6, 6));
         String how;
         if (ex.pulseTap) how = "Sol elinle (ya da başparmağınla) her vuruşta DOKUN düğmesine bas; aynı anda ritmi “ta” diye sesle söyle.";
         else if (ex.voice) how = "Ritmi “ta” hecesiyle, kısa ve net söyle. Sus olan yerde sessiz kal.";
@@ -764,16 +805,11 @@ public class ExerciseView extends LinearLayout {
             onsetsHeard = 0;
             List<Double> bs = new ArrayList<>();
             List<Integer> idx = new ArrayList<>();
-            double minGap;
-            if (ex.hitBeats != null) {
-                for (int i = 0; i < ex.hitBeats.length; i++) { bs.add((double) ex.hitBeats[i]); idx.add(ex.hitDisp[i]); }
-                minGap = 4;
-                for (int i = 1; i < ex.hitBeats.length; i++) minGap = Math.min(minGap, ex.hitBeats[i] - ex.hitBeats[i - 1]);
-            } else {
-                double stepBeats = (double) ex.beatsPerBar / ex.grid;
-                for (int i = 0; i < ex.hits.length; i++) if (ex.hits[i]) { bs.add(i * stepBeats); idx.add(i); }
-                minGap = stepBeats;
-            }
+            rhythmBlocks(bs, idx);
+            double minGap = 4;
+            for (int i = 1; i < bs.size(); i++) minGap = Math.min(minGap, bs.get(i) - bs.get(i - 1));
+            timeline.started = true;
+            timeline.countIn = countIn;
             float tol = windowMs();
             if (ex.tapMode) tol = Math.max(tol, 150);
             if (ex.voice) tol = Math.max(tol, 160);
@@ -847,6 +883,7 @@ public class ExerciseView extends LinearLayout {
         if (t < tr.at(0) - 2 * tr.win) return; // sayım sırasında yok say
         int best = -1; long bd = Long.MAX_VALUE;
         for (int i = 0; i < tr.beat.length; i++) { if (tr.hit[i]) continue; long dd = Math.abs(t - tr.at(i)); if (dd < bd) { bd = dd; best = i; } }
+        if (timeline != null && tr == main) timeline.addTap((float) ((t - tr.lat - met.beatNanos(countIn)) / (60e9 / effectiveBpm())), best >= 0 && bd <= tr.win);
         if (best >= 0 && bd <= tr.win) {
             tr.hit[best] = true; tr.lastMatched = t;
             markDisp(tr, best, 1);
@@ -894,6 +931,13 @@ public class ExerciseView extends LinearLayout {
         beats.centerText = phaseText(beat, silent ? "🤫 içinden say!" : Math.round(effectiveBpm()) + " BPM");
         beats.invalidate();
         if (notation != null) { notation.cursorBeat = (float) beat; notation.invalidate(); }
+        if (timeline != null) {
+            timeline.beatPos = (float) beat;
+            timeline.silent = silent;
+            long first = met.beatNanos(0);
+            timeline.bigText = now < first ? String.valueOf((int) Math.ceil((first - now) / 1e9)) : beat >= 0 && beat < 1 ? "ŞİMDİ" : null;
+            timeline.invalidate();
+        }
         boolean a = checkMisses(main, now);
         if (finished) return;
         boolean b = checkMisses(pulse, now);
