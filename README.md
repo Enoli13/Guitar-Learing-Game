@@ -26,7 +26,7 @@ Her ünite, onu zaten biliyorsan **sınavla atlanabilir**.
 XP ve seviyeler (Çırak → Efsane), günlük hedef halkası, seri (🔥) ve seri dondurucu, değişken ödüllü sandıklar, 22 rozet, pena (🎸) ile dükkân, ders yıldızları, günlük hatırlatma bildirimi. Tasarım; Octalysis, Hook modeli (tetikleyici → eylem → değişken ödül → yatırım) ve Tiny Habits (küçük başla, anında kutla) ilkelerine dayanır.
 
 ### 🎵 Şarkı Yolu
-Nirvana, Guns N' Roses ve Eric Clapton'dan 18 şarkı, zorluk sırasıyla. Her şarkı için gereken dersler gösterilir; hepsi bitince **"Hazırsın"**. Telif hakkı nedeniyle şarkıların tab'ları uygulamada yoktur; kendin getirirsin:
+**Şarkı Yolu:** Yol'daki 29 ünitenin aynısı, ama her ünite en az bir şarkının bir parçası üzerinden öğretilir (Nirvana, Guns N' Roses, Clapton, Buckethead, Black Sabbath, Duman, mor ve ötesi, Model, Manga, Yüzyüzeyken Konuşuruz ... toplam 39 parça). Ünitenin dersleri Yol ile ortaktır; "Şarkıdan teori" adımı ünitenin konusundaki soruları (nota adları, akorlar, aralıklar, gamlar, ritim değerleri, akort) yüklediğin tab'ın gerçek notalarından üretir. Ünite, dersler bitip ana şarkının parçası tempoda (orijinalin en az %80'i) temiz çalınınca tamamlanır ve sıradaki ünite açılır. Telif hakkı nedeniyle şarkıların tab'ları uygulamada yoktur; kendin getirirsin:
 
 - **Dosyadan:** Guitar Pro (.gp, .gp5, .gp4, .gp3) ve MusicXML (.musicxml, .mxl, .xml). Ritim, akort ve teknikler (bend, hammer-on, slide) dosyadan okunur; birden çok parça varsa hangisini çalacağını seçersin. Başka uygulamadan "Paylaş → Perde" de çalışır.
 - **Metinden:** ASCII tab'ı yapıştır ya da elle yaz (tel etiketlerinden akort da okunur).

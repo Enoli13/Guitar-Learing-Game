@@ -99,7 +99,7 @@ public class MainActivity extends Activity {
 
     private void renderNav() {
         nav.removeAllViews();
-        String[][] items = {{"🗺", "Yol"}, {"🧠", "Tekrar"}, {"🎵", "Şarkılar"}, {"👤", "Profil"}};
+        String[][] items = {{"🗺", "Yol"}, {"🧠", "Tekrar"}, {"🎵", "Şarkı Yolu"}, {"👤", "Profil"}};
         for (int i = 0; i < items.length; i++) {
             final int k = i;
             LinearLayout b = Ui.vbox(this);
@@ -291,6 +291,12 @@ public class MainActivity extends Activity {
     @Override protected void onPause() { super.onPause(); if (toolMet != null) { toolMet.stop(); toolMet = null; } }
 
     // ---------------------------------------------------------------- Şarkılar
+    private boolean unitDone(Curriculum.Unit u) {
+        for (Curriculum.Lesson l : u.lessons) if (!l.id.endsWith("_pratik") && !prog.isDone(l.id)) return false;
+        for (Curriculum.Song s : cur.songsOf(u)) if (s.main && !SongProgress.isLearned(prog, s)) return false;
+        return true;
+    }
+
     private View songsView() {
         ScrollView sv = new ScrollView(this);
         LinearLayout col = Ui.vbox(this);
@@ -298,28 +304,63 @@ public class MainActivity extends Activity {
         col.setPadding(p, p / 2, p, p);
         sv.addView(col);
         col.addView(Ui.text(this, "Şarkı Yolu", 24, Ui.TEXT, true));
-        col.addView(Ui.text(this, "Her şarkı için gereken dersleri bitirince \"Hazırsın\" olur. Tab'ı Ultimate Guitar ya da Songsterr'den kopyalayıp yapıştır; uygulama onu mikrofonla kontrol edilen, ölçü ölçü çalışabileceğin bir göreve çevirir.", 14, Ui.MUTED, false), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 4, 12));
-        for (Curriculum.Song s : cur.songs) {
-            int done = 0;
-            for (String id : s.prereqs) if (prog.isDone(id.trim())) done++;
-            boolean ready = done == s.prereqs.length;
-            if (ready) prog.unlock("sarki");
+        col.addView(Ui.text(this, "Yol'daki üniteler ve konular, ama her şey sevdiğin şarkılar üzerinden: her ünitede en az bir şarkının bir parçasını çalarken o ünitenin konusunu öğrenirsin. Dersler Yol ile ortak; ünite, dersleri bitirip ana şarkının parçasını tempoda temiz çalınca tamamlanır.", 14, Ui.MUTED, false), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 4, 12));
+        boolean open = true;
+        int missingTabs = 0;
+        for (Curriculum.Unit u : cur.units) {
+            List<Curriculum.Song> ss = cur.songsOf(u);
+            final boolean unlocked = open;
+            boolean done = unitDone(u);
+            int ld = 0, lt = 0;
+            for (Curriculum.Lesson l : u.lessons) if (!l.id.endsWith("_pratik")) { lt++; if (prog.isDone(l.id)) ld++; }
             LinearLayout card = Ui.card(this);
-            LinearLayout row = Ui.hbox(this);
-            LinearLayout txt = Ui.vbox(this);
-            txt.addView(Ui.text(this, s.title, 18, Ui.TEXT, true));
-            txt.addView(Ui.text(this, s.artist + "   " + "●●●●●".substring(0, s.difficulty) + "○○○○○".substring(s.difficulty), 13, Ui.MUTED, false));
-            row.addView(txt, Ui.weight(1));
-            TextView badge = Ui.text(this, ready ? "Hazırsın ✓" : done + "/" + s.prereqs.length, 14, ready ? Ui.GREEN : Ui.ORANGE, true);
-            row.addView(badge);
-            card.addView(row);
+            if (!unlocked) card.setAlpha(0.45f);
+            LinearLayout head = Ui.hbox(this);
+            LinearLayout ht = Ui.vbox(this);
+            ht.addView(Ui.text(this, "Ünite " + (u.index + 1) + " • " + u.title, 18, done ? Ui.GREEN : Ui.TEXT, true));
+            ht.addView(Ui.text(this, u.subtitle, 13, Ui.MUTED, false));
+            head.addView(ht, Ui.weight(1));
+            head.addView(Ui.text(this, done ? "✓" : unlocked ? "" : "🔒", 20, Ui.GREEN, true));
+            card.addView(head);
+            float songSum = 0; int songN = 0;
+            for (Curriculum.Song s : ss) {
+                boolean tab = SongProgress.hasTab(prog, s);
+                if (!tab) missingTabs++;
+                float f = SongProgress.learned(prog, s);
+                if (s.main) { songSum += Math.min(1, f / 0.9f); songN++; }
+                LinearLayout row = Ui.hbox(this);
+                row.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 2));
+                LinearLayout tt = Ui.vbox(this);
+                tt.addView(Ui.text(this, (s.main ? "🎸 " : "➕ ") + s.title + " — " + s.artist, 16, Ui.TEXT, true));
+                tt.addView(Ui.text(this, s.part + (s.main ? "" : " • bonus") + (s.suggested ? " • öneri" : "") + "\n" + s.skills, 12, Ui.MUTED, false));
+                row.addView(tt, Ui.weight(1));
+                String st = !tab ? "Tab yok" : f >= 0.9f ? "✓" : "%" + Math.round(f * 100);
+                row.addView(Ui.text(this, st, 14, !tab ? Ui.ORANGE : f >= 0.9f ? Ui.GREEN : Ui.BLUE, true));
+                if (unlocked) row.setOnClickListener(v -> SongActivity.open(this, s.entryKey(), null));
+                card.addView(row);
+            }
             Views.Bar bar = new Views.Bar(this);
-            bar.value = (float) done / s.prereqs.length; bar.color = ready ? Ui.GREEN : Ui.ORANGE;
-            card.addView(bar, Ui.lpm(this, Ui.MATCH, Ui.dp(this, 10), 8, 0));
-            if (prog.songTabs.containsKey(s.id())) card.addView(Ui.text(this, "📄 Tab eklendi", 12, Ui.BLUE, false));
-            card.setOnClickListener(v -> SongActivity.open(this, s.id(), null));
+            bar.value = (ld + songSum) / Math.max(1, lt + songN); bar.color = done ? Ui.GREEN : Ui.PURPLE;
+            card.addView(bar, Ui.lpm(this, Ui.MATCH, Ui.dp(this, 8), 8, 4));
+            TextView lessonsT = Ui.text(this, "📚 Şarkı için gereken dersler: " + ld + "/" + lt + (unlocked ? "  ▾" : ""), 13, Ui.BLUE, true);
+            card.addView(lessonsT);
+            LinearLayout list = Ui.vbox(this);
+            list.setVisibility(View.GONE);
+            for (Curriculum.Lesson l : u.lessons) {
+                boolean d = prog.isDone(l.id);
+                TextView t = Ui.text(this, (d ? "✓ " : "○ ") + l.title, 14, d ? Ui.GREEN : Ui.TEXT, false);
+                t.setPadding(Ui.dp(this, 8), Ui.dp(this, 4), 0, Ui.dp(this, 4));
+                if (unlocked) t.setOnClickListener(v -> lessonSheet(l, true));
+                list.addView(t);
+            }
+            card.addView(list);
+            if (unlocked) lessonsT.setOnClickListener(v -> list.setVisibility(list.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
+            if (!unlocked) card.addView(Ui.text(this, "Önceki üniteyi bitirince açılır.", 12, Ui.MUTED, false));
             col.addView(card, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 6, 6));
+            if (!done) open = false;
+            if (done) prog.unlock("sarki");
         }
+        if (missingTabs > 0) col.addView(Ui.text(this, "📄 Tab'ı eksik şarkı: " + missingTabs + ". Şarkıya dokunup Guitar Pro / MusicXML dosyasını ya da tab metnini yükle.", 13, Ui.ORANGE, false), 1);
         prog.save();
         col.addView(Ui.text(this, "Kendi şarkıların", 20, Ui.TEXT, true), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 18, 6));
         for (int i = 0; i < prog.customSongs.size(); i++) {

@@ -59,9 +59,17 @@ public class Harness {
         while ((line = br.readLine()) != null) {
             if (line.trim().isEmpty() || line.startsWith("#")) continue;
             songs++;
-            for (String p : line.split("\\|")[2].split(",")) check(cur.byId.containsKey(p.trim()), "şarkı önkoşulu yok: " + p);
+            String uid = line.split("\\|")[0].trim();
+            boolean found = false;
+            for (Curriculum.Unit u : cur.units) if (u.id.equals(uid)) found = true;
+            check(found, "şarkının ünitesi yok: " + uid);
         }
         System.out.println("Şarkı: " + songs);
+        java.util.Set<String> withSong = new java.util.HashSet<>();
+        try (BufferedReader b2 = new BufferedReader(new InputStreamReader(new FileInputStream(assets + "/songs.txt"), StandardCharsets.UTF_8))) {
+            String l2; while ((l2 = b2.readLine()) != null) if (!l2.trim().isEmpty() && !l2.startsWith("#")) withSong.add(l2.split("\\|")[0].trim());
+        }
+        for (Curriculum.Unit u : cur.units) check(withSong.contains(u.id), "ünitede şarkı yok: " + u.id);
 
         // 2) Teori
         check(String.join(" ", Theory.spellScale("F", "major")).equals("F G A Bb C D E"), "F majör");

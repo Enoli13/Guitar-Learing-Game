@@ -1,19 +1,42 @@
-# başlık | sanatçı | gereken dersler | zorluk 1-5 | gereken beceriler | ipucu
-Knockin' on Heaven's Door | Guns N' Roses (Bob Dylan cover) | u05d,u05e,u05f | 1 | Açık akorlar (G, D, Am, C), sekizlik aşağı-yukarı strum, yavaş geçişler | İlk şarkın için ideal: dört açık akor ve sakin bir tempo.
-About a Girl | Nirvana | u05f,u07a,u07b | 2 | Açık ve power akorlar, düzenli sekizlik ritim, akor geçişleri | Nirvana'nın en melodik şarkılarından; temiz tonla başla.
-Polly | Nirvana | u07a,u07b,u05f | 2 | Power chord kaydırma, akustik strum, sakin dinamik | Kayıttaki akordu tab'dan kontrol et.
-Patience | Guns N' Roses | u05f,u13b,u25a | 2 | Açık akorlar, akustik strum, yarım ses aşağı akort | Akustik gitarla, ıslık eşliğinde.
-Wonderful Tonight | Eric Clapton | u05f,u16d,u12d | 2 | Açık akorlar ve slash akorlar (G/B gibi), melodik giriş, yumuşak bend'ler | Az ama yerinde nota: Clapton'ın tonu ve vibratosu.
-Come As You Are | Nirvana | u03b,u07c,u11a,u25a | 2 | Tek notalı riff, tab okuma, palm mute, düşük akort | Riffi önce yavaş, metronomla.
-Smells Like Teen Spirit | Nirvana | u07a,u07b,u07d,u11b | 3 | Power chord'lar, 16'lık susturulmuş vuruşlar, sessiz kıta / yüksek nakarat dinamiği | Sağ el 16'lık sarkacını hiç durdurma.
-Lithium | Nirvana | u07b,u07d,u13a | 3 | Power chord ve barre geçişleri, dinamik kontrast | Kıta temiz ve hafif, nakarat patlasın.
-Heart-Shaped Box | Nirvana | u07b,u07c,u12d | 3 | Power chord'lar, palm mute, bend'li basit solo | Kayıttaki akorda dikkat et.
-Tears in Heaven | Eric Clapton | u15a,u15b,u16d | 3 | Parmakla çalma, slash akorlar ve bas yürüyüşü | Başparmak bası sabit tutsun.
-Sunshine of Your Love | Cream (Eric Clapton) | u12b,u11b,u12d | 3 | Blues gamı riffi, oktav, bend | Riff tamamen blues gamından çıkar.
-Cocaine | Eric Clapton (J.J. Cale cover) | u12a,u07c,u18b | 3 | Pentatonik riff, palm mute, shuffle hissi | Az ama ritmik — groove her şey.
-Layla (Unplugged) | Eric Clapton | u18b,u18c,u15a | 3 | Akustik blues shuffle, majör/minör pentatonik karışımı | Unplugged versiyonu orijinalden yavaş ve swingli.
-Welcome to the Jungle | Guns N' Roses | u07c,u12a,u12d,u22a | 4 | Tek notalı riffler, power chord'lar, bend'ler, hızlı alternatif pena | Riff'te delay efekti var; önce kuru çal.
-Paradise City | Guns N' Roses | u13c,u07d,u12f,u22a | 4 | Akorlar ve power chord'lar, hızlı 16'lık strum, pentatonik solo | Son bölüm hızlanır: tempo merdiveni kullan.
-Layla | Derek and the Dominos (Eric Clapton) | u12a,u12d,u14d,u22a | 4 | Minör pentatonik riff, bend'ler, pozisyon değiştirme, hız | Riff D minör pentatonik etrafında döner.
-Sweet Child O' Mine | Guns N' Roses | u22b,u12d,u20a,u25a | 5 | Tel atlama, alternatif pena, bend'ler, minör/armonik minör renkli solo, yarım ses aşağı akort | Giriş riffi tel atlama ustalık sınavıdır.
-November Rain (solo) | Guns N' Roses | u12d,u14d,u19d,u20a,u22a | 5 | Bend ve vibrato, pentatonik + doğal minör, uzun melodik solo kurgusu | Her bend'i hedef notaya tam oturt.
+# Şarkı Yolu: her ünite, yoldaki aynı konuları şarkılar üzerinden öğretir.
+# ünite | başlık | sanatçı | parça | zorluk 1-5 | bu parçada öğreneceklerin | ipucu | kaynak (liste = senin listen, öneri = benim önerim)
+# Bir ünitenin ilk şarkısı ana şarkıdır (üniteyi bitirmek için gerekir), diğerleri bonus.
+u01 | Nothing Else Matters | Metallica | Giriş (ilk 2 ölçü) | 1 | Akort, altı boş telin adı ve yeri, sağ elle tek tel seçmek | Giriş yalnızca boş tellerle başlar: kalın E, G, B, ince e. Sol el hiç basmaz. | öneri
+n01 | Paranoid | Black Sabbath | Riffin altındaki sekizlik nabız | 1 | Nabzı dinleyip dokunmak, kalın E telinde metronomla sekizlik sürmek | Önce sadece şarkıyı dinleyip ayağınla nabzı tut, sonra boş E telinde sekizlik çal. | liste
+u02 | Come As You Are | Nirvana | Ana riff | 1 | 6. ve 5. telde ilk pozisyondaki notalar, yarım ses (F–F♯–G–G♯) | Riff tamamen 0-2. perdelerde: her perdeyi çalarken adını söyle. | öneri
+k01 | Hırka | Onurcan Özcan | Nakarat melodisi | 2 | Melodiyi tondaki dereceleriyle (do-re-mi) söyleyip sonra gitarda bulmak | Vokal partisi olan bir dosya (Guitar Pro/MusicXML) en iyisi; yoksa melodiyi tab olarak yaz. | liste
+u03 | The Man Who Sold the World | Nirvana | Ana riff (MTV Unplugged) | 2 | Tab okumak, tek notalı melodiyi zamanında çalmak | Riff tekrar eder: önce ilk iki ölçü, sonra tamamı. | liste
+u04 | In Bloom | Nirvana | Kıta riffi | 2 | Dörtlük, sekizlik ve susları okuyup susları gerçekten susturmak | Sus = sol eli gevşet, ses kesilsin. | liste
+u04 | Çilingir | Onurcan Özcan | Kıta ritmi | 2 | Düzenli bir strum kalıbını metronomla tutmak | Sağ el hiç durmasın, boş vuruşlarda havaya vur. | liste
+u05 | Hatun | Duman | Kıta akorları | 2 | Açık akorlar ve aralarında zamanında geçiş | Geçişten bir vuruş önce sol eli hazırla. | liste
+u05 | Bir Derdim Var | mor ve ötesi | Kıta akorları | 2 | Açık akorlarla bir rock şarkısı çalmak | Akorları önce bekleme modunda tek tek bul. | liste
+u06 | Little Darlin' | Barış Manço | Ana melodi | 2 | Melodiyi porteden okuyup çalmak | "Notaya çevir" görünümünde çalış, tab'a bakma. | liste
+u07 | Smells Like Teen Spirit | Nirvana | Ana riff ve kıta | 3 | Power chord, palm mute, susturulmuş (x) vuruşlar | Sağ el 16'lık sarkaç gibi hiç durmasın; x'ler sol eli gevşeterek. | liste
+u07 | Köpekler | Duman | Ana riff | 3 | Power chord'larla rock riffi | Distortion'da sadece iki-üç tel çalsın, diğerlerini sustur. | liste
+u08 | Drain You | Nirvana | Giriş ve riff | 2 | Riffteki aralıkları (beşli, oktav) görmek ve duymak | Her iki nota arasındaki aralığı söyleyerek çal. | liste
+u09 | Küçük Sevgilim | mor ve ötesi | Melodik gitar partisi | 3 | Majör tondaki bir melodinin dereceleri | Melodinin hangi notada "eve döndüğünü" dinle. | liste
+u10 | Cambaz | mor ve ötesi | Akor yürüyüşü | 3 | Akorların tondaki dereceleri (I, IV, V, vi …) | Her akorun tonun kaçıncı derecesi olduğunu yaz. | liste
+u10 | Deniyorum, Ama | Mavi | Akor yürüyüşü | 3 | Diyatonik akorları bir şarkıda tanımak | Akorların ortak notalarını bul. | liste
+u11 | Cevapsız Sorular | Manga | Ana riff | 3 | 16'lıklar ve senkop | Önce "1-e-ve-a" diye sayarak dokun, sonra çal. | liste
+u11 | Sayın Bayan | Duman | Kıta ritmi | 3 | Senkoplu strum | Vuruşun arasına düşen akorları abart. | liste
+u12 | Layla | Derek and the Dominos | Giriş riffi | 4 | Minör pentatonik riff, bend | Riff D minör pentatonik etrafında döner. | liste
+u13 | Makyaj | Model | Kıta ve nakarat akorları | 3 | Barre akorlar ve geçişleri | Barre'da işaret parmağını hafif yana yatır. | liste
+u13 | Deli | mor ve ötesi | Akorlar | 3 | Barre akorla rock çalmak | Önce akorları tek tek temiz çıkar. | liste
+u14 | No More Tears | Ozzy Osbourne | Ana riff | 4 | Klavye boyunca pozisyon değiştirmek, oktavlar | Hangi oktavda olduğunu takip et. | liste
+u15 | Beklenen Gemi | Yüzyüzeyken Konuşuruz | Giriş | 3 | Parmakla arpej, başparmakla bas | Başparmak basları, diğer parmaklar tizleri. | liste
+u16 | Boş Gemiler | Yüzyüzeyken Konuşuruz | Akorlar | 3 | 7'li, add9, sus gibi renkli akorlar | Akor adlarını sözlükten kontrol et: hangi nota rengi veriyor? | liste
+u17 | This I Love | Guns N' Roses | Akor yürüyüşü | 3 | Kadanslar ve ilgili minör | Şarkının nerede "durduğunu" (kadans) dinle. | liste
+u18 | Layla (Unplugged) | Eric Clapton | Ana riff ve kıta | 3 | Shuffle hissi, majör/minör pentatonik karışımı | Unplugged versiyonu daha yavaş ve swingli. | liste
+u19 | Seni Her Gördüğümde | Erkin Koray | Riff ve solo | 3 | Modal renk (Anadolu rock'ta Frig/Hicaz sesi) | Gamın 2. derecesinin köke yarım ses yakın olduğunu duy. | liste
+u20 | Sweet Child O' Mine | Guns N' Roses | Solo (ilk bölüm) | 5 | Doğal ve armonik minörün renkleri | Hangi notaların gamın dışına çıktığını işaretle. | liste
+u21 | Soothsayer | Buckethead | Giriş arpejleri | 4 | Akor tonlarıyla melodi kurmak | Her arpejin hangi akordan geldiğini bul. | liste
+c01 | Black Dog | Led Zeppelin | Ana riff | 4 | Ölçü çizgisini aşan kalıp, kayan vurgu | Davul 4/4 sayarken riff kayar: ikisini birlikte say. | öneri
+u22 | Siege Engine | Buckethead | Ana riff | 5 | Alternatif pena ve hız merdiveni | Yavaştan başla, temiz çalınca +5 BPM. | liste
+u22 | Sweet Child O' Mine | Guns N' Roses | Giriş riffi | 5 | Tel atlama, alternatif pena | Giriş riffi tel atlama ustalık sınavıdır. | liste
+u23 | Dumb | Nirvana | Kıta ve nakarat | 3 | Ödünç akor ve tondaki "yabancı" akorun rengi | Tona ait olmayan akoru bul ve nereden ödünç alındığını düşün. | liste
+u24 | Unutulanlar | Farazi | Bir bölüm (kulaktan) | 3 | Kulaktan çıkarmak, sonra tab ile karşılaştırmak | Önce tab'a bakmadan dinle ve dene. | liste
+u24 | Ölürüm Daha İyi | Model | Bir bölüm (kulaktan) | 3 | Kulaktan akor ve melodi çıkarmak | Önce bas notasını bul. | liste
+u24 | Mor Yazma | Umut Kaya | Bir bölüm (kulaktan) | 3 | Kulaktan melodi çıkarmak | Melodinin en uzun notası genelde tonun merkezidir. | liste
+u25 | Welcome to the Jungle | Guns N' Roses | Giriş | 4 | Yarım ses pes akort (Eb), ton ve dinamik | Gitarını Eb akorda indir; uygulama akortu tab'dan okur. | liste
+u25 | Heart-Shaped Box | Nirvana | Kıta riffi | 3 | Kayıttaki akort, temiz/distortion dinamiği | Kıta sakin, nakarat patlasın. | liste
+u26 | Sweet Child O' Mine | Guns N' Roses | Tam şarkı (final) | 5 | Yolda öğrendiğin her şeyi tek şarkıda | Bölüm bölüm çalış, sonunda baştan sona. | liste

@@ -54,6 +54,7 @@ public class SongActivity extends Activity implements ExerciseView.Host {
     private int lastStep = -1;
     private final Handler h = new Handler(Looper.getMainLooper());
     private ScrollView scroll;
+    private TextView partLabel;
 
     public static void open(Activity a, String songId, String customIdx) {
         Intent i = new Intent(a, SongActivity.class);
@@ -79,7 +80,7 @@ public class SongActivity extends Activity implements ExerciseView.Host {
             prog.save();
             cid = String.valueOf(prog.customSongs.size() - 1);
         }
-        if (sid != null) for (Curriculum.Song s : cur.songs) if (s.id().equals(sid)) song = s;
+        if (sid != null) song = cur.songByKey(sid);
         if (cid != null) customIdx = Integer.parseInt(cid);
         if (song == null && (customIdx < 0 || customIdx >= prog.customSongs.size())) { finish(); return; }
         key = song != null ? song.id() : "custom" + customIdx;
@@ -99,17 +100,21 @@ public class SongActivity extends Activity implements ExerciseView.Host {
         back.setOnClickListener(v -> finish());
         col.addView(back);
         if (song != null) {
-            col.addView(Ui.text(this, song.title, 26, Ui.TEXT, true), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 10, 0));
-            col.addView(Ui.text(this, song.artist + "  •  Zorluk " + song.difficulty + "/5", 14, Ui.MUTED, false));
+            col.addView(Ui.text(this, "Ünite " + (song.unitRef.index + 1) + " • " + song.unitRef.title, 13, Ui.PURPLE, true), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 10, 0));
+            col.addView(Ui.text(this, song.title, 26, Ui.TEXT, true));
+            col.addView(Ui.text(this, song.artist + "  •  Zorluk " + song.difficulty + "/5" + (song.suggested ? "  •  öneri" : ""), 14, Ui.MUTED, false));
             LinearLayout info = Ui.card(this);
-            info.addView(Ui.text(this, "Gereken beceriler", 16, Ui.TEXT, true));
-            info.addView(Ui.text(this, song.skills, 14, Ui.MUTED, false));
+            info.addView(Ui.text(this, "Bu ünitede çalacağın parça: " + song.part, 16, Ui.TEXT, true));
+            info.addView(Ui.text(this, "Öğreneceklerin: " + song.skills, 14, Ui.MUTED, false));
+            partLabel = Ui.text(this, "", 14, Ui.GREEN, true);
+            info.addView(partLabel, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 6, 0));
+            info.addView(Ui.text(this, "Şarkı için gereken dersler (Yol'dakiyle aynı, ilerleme ortak):", 14, Ui.TEXT, true), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 10, 2));
             info.addView(Ui.text(this, "💡 " + song.tip, 14, Ui.YELLOW, false), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 8, 8));
             for (String id : song.prereqs) {
                 Curriculum.Lesson l = cur.byId.get(id.trim());
                 if (l == null) continue;
                 boolean d = prog.isDone(l.id);
-                TextView t = Ui.text(this, (d ? "✓ " : "○ ") + "Ünite " + (l.unit.index + 1) + " • " + l.title, 14, d ? Ui.GREEN : Ui.TEXT, false);
+                TextView t = Ui.text(this, (d ? "✓ " : "○ ") + l.title, 14, d ? Ui.GREEN : Ui.TEXT, false);
                 t.setPadding(0, Ui.dp(this, 3), 0, Ui.dp(this, 3));
                 if (!d) t.setOnClickListener(v -> LessonActivity.start(this, "lesson", l.id));
                 info.addView(t);
@@ -306,6 +311,8 @@ public class SongActivity extends Activity implements ExerciseView.Host {
         stopAll();
         parsed = r;
         practiceBox.removeAllViews();
+        if (song != null) { prog.songTabs.put("len:" + key, String.valueOf(r.measures)); prog.save(); }
+        updatePart();
         fromM = Math.min(prog.songTabs.containsKey("from:" + key) ? parseInt(prog.songTabs.get("from:" + key)) : 0, r.measures - 1);
         toM = Math.min(Math.max(fromM, fromM + 1), r.measures - 1);
         if (!prog.songBpm.containsKey(key)) bpm = r.tempo > 0 ? Math.max(40, Math.round(r.tempo * 0.6f / 5) * 5) : 60;
@@ -396,18 +403,34 @@ public class SongActivity extends Activity implements ExerciseView.Host {
         });
         practiceBox.addView(bs);
 
+        if (song != null) {
+            practiceBox.addView(Ui.text(this, "Ünitenin parçasını işaretle (" + song.part + "): bu ölçüleri tempoda temiz çalınca şarkı bu ünite için öğrenilmiş sayılır.", 12, Ui.MUTED, false), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 10, 4));
+            LinearLayout pr = Ui.hbox(this);
+            Button pa = Ui.secondary(this, "📌 Parça başı");
+            Button pz = Ui.secondary(this, "📌 Parça sonu");
+            pa.setTextSize(13); pz.setTextSize(13);
+            pa.setOnClickListener(v -> { int[] rg = SongProgress.part(prog, song, parsed.measures); SongProgress.setPart(prog, song, fromM, Math.max(fromM, rg[1])); updatePart(); });
+            pz.setOnClickListener(v -> { int[] rg = SongProgress.part(prog, song, parsed.measures); SongProgress.setPart(prog, song, Math.min(rg[0], toM), toM); updatePart(); });
+            LinearLayout.LayoutParams wp = Ui.weight(1); wp.rightMargin = Ui.dp(this, 6);
+            pr.addView(pa, wp); pr.addView(pz, Ui.weight(1));
+            practiceBox.addView(pr);
+        }
+
         // öğrenme adımları
         practiceBox.addView(Ui.text(this, "Bu bölümü öğren", 20, Ui.TEXT, true), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 16, 2));
         practiceBox.addView(Ui.text(this, "Kulak → ritim → perde → tempo. Her adımı sırayla geç; aşağıdaki kayan şeritte çalacağın her nota adıyla, akorlar adıyla gelir.", 13, Ui.MUTED, false));
+        String unitTopic = song != null ? song.unitRef.title.toLowerCase() : "şarkının teorisi";
         String[][] steps = {
                 {"👂 1. Dinle", "Bölümü metronomla dinle, şeridi takip et"},
-                {"👏 2. Ritmi dokun", "Sadece zamanlama: her nota başladığında dokun"},
-                {"🔎 3. Notaları bul", "Bekleme modu: doğru notayı/akoru basınca ilerler"},
-                {"🎸 4. Tempoda çal", "Metronomla, ilk hatada durur; temiz çalınca +5 BPM"},
+                {"🧠 2. Şarkıdan teori", "Bu bölümün gerçek notalarından " + unitTopic + " soruları"},
+                {"👏 3. Ritmi dokun", "Sadece zamanlama: her nota başladığında dokun"},
+                {"🔎 4. Notaları bul", "Bekleme modu: doğru notayı/akoru basınca ilerler"},
+                {"🎸 5. Tempoda çal", "Metronomla, ilk hatada durur; temiz çalınca +5 BPM"},
         };
+        int[] codes = {0, 5, 1, 2, 3};
         for (int i = 0; i < steps.length; i++) {
-            final int k = i;
-            Button bt = i == 3 ? Ui.primary(this, steps[i][0]) : Ui.button(this, steps[i][0], Ui.BLUE, Ui.BLUE_D);
+            final int k = codes[i];
+            Button bt = i == 4 ? Ui.primary(this, steps[i][0]) : Ui.button(this, steps[i][0], i == 1 ? Ui.PURPLE : Ui.BLUE, i == 1 ? Ui.darker(Ui.PURPLE, 0.7f) : Ui.BLUE_D);
             bt.setTextSize(16);
             bt.setOnClickListener(v -> startStep(k));
             practiceBox.addView(bt, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 8, 0));
@@ -416,6 +439,18 @@ public class SongActivity extends Activity implements ExerciseView.Host {
         exView = new ExerciseView(this);
         practiceBox.addView(exView, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 12, 0));
         updateLabels();
+    }
+
+    private void updatePart() {
+        if (partLabel == null || song == null) return;
+        int total = parsed != null ? parsed.measures : SongProgress.total(prog, song);
+        if (total <= 0) { partLabel.setText("Tab'ı yükleyince parçayı işaretleyip çalışmaya başla."); partLabel.setTextColor(Ui.YELLOW); return; }
+        int[] rg = SongProgress.part(prog, song, total);
+        float f = SongProgress.learned(prog, song);
+        String need = parsed != null && parsed.tempo > 0 ? " (en az " + Math.round(parsed.tempo * 0.8f) + " BPM ile)" : "";
+        partLabel.setText((f >= 0.9f ? "✓ Öğrenildi! " : "Öğrenilen: %" + Math.round(f * 100) + "  •  ") + "parça ölçü " + (rg[0] + 1) + "–" + (rg[1] + 1) + need);
+        partLabel.setTextColor(f >= 0.9f ? Ui.GREEN : Ui.TEXT);
+        if (preview != null) { preview.selFrom = fromM; preview.selTo = toM; preview.invalidate(); }
     }
 
     private static int parseInt(String s) { try { return Integer.parseInt(s); } catch (Exception e) { return 0; } }
@@ -465,6 +500,8 @@ public class SongActivity extends Activity implements ExerciseView.Host {
         lastStep = k;
         switch (k) {
             case 0: listen(e); return;
+            case 5: drills = SongDrills.make(parsed, e.notes, song != null ? song.unit : null, 6, new java.util.Random());
+                drillIdx = 0; drillOk = 0; nextDrill(); return;
             case 1:
                 e.type = Ex.Type.RHYTHM; e.tapMode = true; e.tolMs = 150;
                 e.prompt = "Ritmi dokun";
@@ -478,6 +515,26 @@ public class SongActivity extends Activity implements ExerciseView.Host {
                 e.prompt = "Metronomla çal — ilk hatada durur";
         }
         exView.stop();
+        exView.bind(e, this, 0);
+        h.postDelayed(() -> scroll.smoothScrollTo(0, practiceBox.getTop() + exView.getTop() - Ui.dp(this, 8)), 120);
+    }
+
+    // ---------------------------------------------------------------- 2. şarkıdan teori
+    private List<Ex> drills;
+    private int drillIdx, drillOk;
+
+    private void nextDrill() {
+        exView.stop();
+        if (drills == null || drillIdx >= drills.size()) {
+            exView.removeAllViews();
+            exView.setOrientation(LinearLayout.VERTICAL);
+            int n = drills == null ? 0 : drills.size();
+            exView.addView(Ui.text(this, "🧠 " + drillOk + "/" + n + " doğru" + (drillOk == n ? " — bu bölümün teorisini biliyorsun!" : ". Yanlışları tekrar çözmek için yeniden başlat."), 16, drillOk == n ? Ui.GREEN : Ui.YELLOW, true));
+            if (drillOk == n && n > 0) { prog.addXp(5); prog.save(); }
+            return;
+        }
+        Ex e = drills.get(drillIdx);
+        e.title = "Şarkıdan teori " + (drillIdx + 1) + "/" + drills.size();
         exView.bind(e, this, 0);
         h.postDelayed(() -> scroll.smoothScrollTo(0, practiceBox.getTop() + exView.getTop() - Ui.dp(this, 8)), 120);
     }
@@ -568,6 +625,16 @@ public class SongActivity extends Activity implements ExerciseView.Host {
     }
 
     @Override public void onResult(Ex ex, boolean pass, String message) {
+        if (lastStep == 5) {
+            if (pass) { drillOk++; Sfx.good(); } else Sfx.bad();
+            drillIdx++;
+            h.postDelayed(this::nextDrill, pass ? 1100 : 3200);
+            return;
+        }
+        if (pass && lastStep == 3 && song != null && parsed != null && (parsed.tempo <= 0 || bpm >= parsed.tempo * 0.8f - 0.5f)) {
+            SongProgress.addPassed(prog, song, fromM, toM);
+            updatePart();
+        }
         if (pass) {
             Sfx.good();
             prog.addXp(lastStep == 3 ? 8 : 4);

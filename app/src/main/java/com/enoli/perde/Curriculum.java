@@ -27,9 +27,13 @@ public class Curriculum {
     }
 
     public static class Song {
-        public String title, artist, skills, tip;
+        public String title, artist, skills, tip, unit, part;
         public String[] prereqs;
         public int difficulty;
+        public boolean suggested, main;
+        public Unit unitRef;
+        /** Aynı şarkı birden çok ünitede farklı parçasıyla yer alabilir. */
+        public String entryKey() { return unit + ":" + id(); }
         public String id() { return (title + "|" + artist).toLowerCase().replaceAll("[^a-z0-9]", ""); }
     }
 
@@ -37,6 +41,18 @@ public class Curriculum {
     public final List<Lesson> lessons = new ArrayList<>();
     public final Map<String, Lesson> byId = new HashMap<>();
     public final List<Song> songs = new ArrayList<>();
+
+    public List<Song> songsOf(Unit u) {
+        List<Song> l = new ArrayList<>();
+        for (Song s : songs) if (s.unitRef == u) l.add(s);
+        return l;
+    }
+
+    public Song songByKey(String k) {
+        for (Song s : songs) if (s.entryKey().equals(k)) return s;
+        for (Song s : songs) if (s.id().equals(k)) return s;
+        return null;
+    }
 
     private static Curriculum instance;
 
@@ -59,10 +75,19 @@ public class Curriculum {
                 if (line.isEmpty() || line.startsWith("#")) continue;
                 String[] p = line.split("\\|");
                 Song s = new Song();
-                s.title = p[0].trim(); s.artist = p[1].trim();
-                s.prereqs = p[2].trim().split(",");
-                s.difficulty = Integer.parseInt(p[3].trim());
-                s.skills = p[4].trim(); s.tip = p[5].trim();
+                s.unit = p[0].trim();
+                s.title = p[1].trim(); s.artist = p[2].trim(); s.part = p[3].trim();
+                s.difficulty = Integer.parseInt(p[4].trim());
+                s.skills = p[5].trim(); s.tip = p[6].trim();
+                s.suggested = p.length > 7 && p[7].trim().equals("öneri");
+                for (Unit u : units) if (u.id.equals(s.unit)) s.unitRef = u;
+                if (s.unitRef == null) continue;
+                List<String> pre = new ArrayList<>();
+                for (Lesson l : s.unitRef.lessons) if (!l.id.endsWith("_pratik")) pre.add(l.id);
+                s.prereqs = pre.toArray(new String[0]);
+                boolean first = true;
+                for (Song o : songs) if (o.unit.equals(s.unit)) first = false;
+                s.main = first;
                 songs.add(s);
             }
         } catch (Exception e) { throw new RuntimeException(e); }
