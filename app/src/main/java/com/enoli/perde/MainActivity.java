@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
         cur = Curriculum.get(this);
         prog = Progress.get(this);
         Sfx.enabled = prog.sfxOn;
+        importBundledTabs();
         LinearLayout root = Ui.vbox(this);
         root.setBackgroundColor(Ui.BG);
         topBar = Ui.hbox(this);
@@ -322,6 +323,24 @@ public class MainActivity extends Activity {
         for (Curriculum.Lesson l : u.lessons) if (!l.id.endsWith("_pratik") && !prog.isDone(l.id)) return false;
         for (Curriculum.Song s : cur.songsOf(u)) if (s.main && !SongProgress.isLearned(prog, s)) return false;
         return true;
+    }
+
+    /** Kişisel derlemede assets/tabs/ içine konmuş tab paketi varsa ilk açılışta otomatik yüklenir. */
+    private void importBundledTabs() {
+        try {
+            String[] files = getAssets().list("tabs");
+            if (files == null) return;
+            for (String f : files) {
+                byte[] data;
+                try (java.io.InputStream is = getAssets().open("tabs/" + f)) { data = MusicXml.readAll(is); }
+                String key = "bundled:" + f + ":" + data.length;
+                if (prog.songTabs.containsKey(key)) continue;
+                TabPack.Result res = new TabPack.Result();
+                TabPack.importFile(prog, cur, f, data, res);
+                prog.songTabs.put(key, String.valueOf(res.ok));
+                prog.save();
+            }
+        } catch (Exception ignored) {}
     }
 
     private void openPackPicker() {

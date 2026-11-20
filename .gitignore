@@ -4,3 +4,4 @@ build/
 local.properties
 .gradle/
 .idea/
+app/src/main/assets/tabs/
