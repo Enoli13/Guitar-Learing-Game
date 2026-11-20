@@ -326,6 +326,16 @@ g: strum p="DUDUDUDUDUDUDUDU" grid=16 bpm=60 bars=1
 g: strum p="D.D.DUDUD.D.DUDU" grid=16 bpm=60 bars=2
 g: changes ch=F5@6,A#5@6,G#5@6,C#5@5 bpm=70 beats=2 rep=2
 
+## u07e | Sol elle susturma ve rake
+> SOL ELLE SUSTURMA: power chord basan parmakların boşta kalan kısımları (işaret parmağının ucu, parmakların altı) kullanılmayan tellere hafifçe değer. Böylece altı teli birden vursan bile sadece power chord duyulur. Smells Like Teen Spirit'te sağ el serbestçe savrulur; temizliği sol el sağlar.
+> ---
+> RAKE: notadan hemen önce penayı susturulmuş tellerin üzerinden sürtüp hedef notaya "taranarak" gelmek. Clapton ve Slash sololarında notanın önündeki "çırrt" sesi budur. Susturmayı sol elin boşta kalan parmakları ya da sağ el avucu yapar.
+q: Power chord çalarken altı teli birden vurursan ne duyulmalı? | Sadece power chord, diğer teller susturulmuş | Bütün teller çınlamalı | Akor majöre döner | Hiç ses çıkmamalı // Susturma sol elin işi: kullanılmayan tellere hafifçe değ.
+q: Rake nedir? | Notadan önce penayı susturulmuş tellerden sürtmek | Teli bükmek | Teli kaydırmak | Tele vurmadan basmak
+g: chord name=E5,A5 title="{c}: altı teli birden vur, kullanılmayanları sol elle sustur — sadece power chord duyulmalı"
+g: chord name=G5,D5,C5 title="{c}: altı teli birden vur, kullanılmayan teller susturulmuş olsun"
+g: seq bpm=60 tab="2:8r/h 2:8r/h 1:5r/h 2:8r/h" title="Her notadan önce 2-3 susturulmuş telden rake yap"
+
 # u08 | Aralıklar | Müziğin yapı taşları
 ## u08a | Aralık nedir? İkililer ve üçlüler
 > ARALIK iki nota arasındaki uzaklıktır. Adı iki parçalıdır: NİCELİK (harf sayısı: ikili, üçlü...) ve NİTELİK (küçük, büyük, tam...).
@@ -506,6 +516,29 @@ g: bend s=2 f=8 st=2
 g: bend s=2 f=8 st=1
 g: bend s=3 f=9 st=2
 g: seq bpm=60 tab="3:7b2/h 1:5/q 2:8/q 2:5/h 3:7/h"
+## u12g | Bend çeşitleri: bırakma, ön bend, unison
+> BEND VE BIRAK (release): bük, hedefte tut, sonra teli yavaşça geri bırakıp başlangıç perdesine dön; ses inerek "ağlar". Slash'in Sweet Child O' Mine solosunun dili.
+> ÖN BEND (pre-bend): teli ÇALMADAN önce sessizce hedefe kadar bük, sonra çal ve bırak. Dinleyen notanın aşağı indiğini duyar. Hedefi kulaktan değil parmak hafızasından bulursun.
+> ---
+> UNISON BEND: 2. telde bir nota ile 3. telde iki perde aşağıdaki notayı birlikte çal, 3. teli bükerek ilkine eşitle. İki ses birleşince dalgalanma kaybolur. Hendrix, Slash, Buckethead sever.
+q: Ön bend'de tel ne zaman bükülür? | Çalmadan önce | Çaldıktan sonra | Hiç bükülmez | Pena ile aynı anda
+q: Unison bend'de hedef nedir? | Bükülen tel diğer telin sesine eşitlenir | Bir oktav çıkmak | Yarım ses bükmek | İki teli bırakmak
+g: path s=3 f=7 p=0,2,0 title="3. tel 7: tam bük, tut, sonra geri bırak"
+g: path s=2 f=8 p=0,2,0 title="2. tel 8: bük ve bırak"
+g: path s=2 f=10 p=0,1,0,2 title="Yarım bük, bırak, sonra tam bük"
+g: path s=3 f=7 p=2,0 title="Ön bend: 3. tel 7'yi ÇALMADAN tam bük, sonra çal ve bırak"
+g: path s=3 f=12 p=0,2 title="Unison: 2. tel 10 ile 3. tel 12'yi birlikte çal, 3. teli 2. telin sesine kadar bük"
+
+## u12h | Çift ses (double stop)
+> ÇİFT SES: iki teli aynı anda çalmak. En yaygını 1. ve 2. telde aynı perde (pentatonikte dörtlü) ve 2-3. tellerde üçlüler. Chuck Berry'den Layla'ya rock sololarının "kalın" sesi.
+> ---
+> ÇİFT SES BEND: iki teli birlikte basıp alttakini (3. tel) bükmek; üstteki sabit kalır. Clapton'ın sevdiği hareketlerden.
+q: 1. ve 2. telde aynı perdeye basılan çift sesin aralığı ne? | Tam dörtlü | Oktav | Büyük üçlü | Tam beşli // B ve E telleri arası dörtlüdür.
+q: G ve B telleri aynı perdede hangi aralığı verir? | Büyük üçlü | Tam dörtlü | Küçük üçlü | Tam beşli // Gitarın tek "üçlü" aralıklı tel çifti G–B'dir.
+g: seq bpm=60 tab="2:8+1:8/q 2:8+1:8/q 2:5+1:5/h" title="Çift ses: 1. ve 2. tel birlikte (A minör pentatonik)"
+g: seq bpm=60 tab="3:4+2:3/q 3:5+2:5/q 3:7+2:7/h" title="G majörde 3-2. tellerde üçlü çift sesler"
+g: path s=3 f=7 p=0,2 title="Çift ses bend: 2. tel 8'i tutarken 3. tel 7'yi tam bük"
+
 ## u12e | Slide ve ilk licks
 > SLIDE (/ veya \): parmağı bastırırken teli kaydırarak başka perdeye geçmek. Licks: kısa, tekrar kullanılabilir melodik kalıplar — solonun kelimeleri.
 > Aşağıdaki lick'ler bu uygulama için yazılmış, A minör pentatonikte klasik kalıplardır.
@@ -583,6 +616,13 @@ g: seq bpm=60 tab="5:0/e 3:2/e 2:1/e 1:0/e 2:1/e 3:2/e 5:0/e 3:2/e 6:0/e 3:0/e 2
 g: seq bpm=60 tab="5:3/q 4:2/q 5:3/q 4:2/q" rep=2 title="Önce sadece başparmak (C)"
 g: seq bpm=60 tab="5:3/e 2:1/e 4:2/e 1:0/e 5:3/e 2:1/e 4:2/e 3:0/e" rep=2 title="Travis C"
 g: seq bpm=60 tab="6:3/e 2:0/e 4:0/e 1:3/e 6:3/e 2:0/e 4:0/e 3:0/e" rep=2 title="Travis G"
+
+## u15c | Akor süslemeleri
+> AKOR SÜSLEMESİ: akoru tutarken boşta kalan parmakla hammer-on ve pull-off yapmak. D akorunda 1. tele 3. perde eklemek (Dsus4) ve kaldırmak gibi. Hendrix, Clapton (Layla Unplugged) ve akustik baladlar bu süslemelerle canlanır.
+q: D akorunda 1. tele 3. perde eklenirse akor ne olur? | Dsus4 | Dm | D7 | Dmaj7
+g: seq bpm=60 tab="4:0+3:2+2:3+1:2/q 1:3h/q 1:2p/q 1:0p/q" title="D akoru: 1. telde 3-2-0 süslemesi"
+g: seq bpm=60 tab="5:0+4:2+3:2+2:2/q 2:3h/q 2:2p/q 2:0p/q" title="A akoru: 2. telde süsleme"
+g: seq bpm=70 tab="4:0+3:2+2:3+1:2/q 1:3h/e 1:2p/e 5:0+4:2+3:2+2:2/q 2:3h/e 2:2p/e" title="D ve A süslemeleri art arda"
 
 # u16 | Dörtlü ve Genişletilmiş Akorlar | 7'liler, sus, add, çevrimler
 ## u16a | maj7, 7 ve m7
@@ -696,6 +736,17 @@ g: scale key=E type=phrygian pos=0 bpm=60 dur=q
 g: mode n=6
 g: scalespell keys=D,E,G,A types=dorian,mixolydian,lydian,phrygian n=3
 
+## u19e | Anadolu rengi: Hicaz ve çeyrek ses
+> HİCAZ RENGİ (Frig dominant): 1, ♭2, 3, 4, 5, ♭6, ♭7. Kök ile ♭2 arasındaki yarım ses ve ♭2 ile 3 arasındaki 1,5 ses "doğulu" havayı verir; Erkin Koray ve Anadolu rock'un imzası. E köklü: E F G# A B C D.
+> ---
+> ÇEYREK SES (koma) BEND: bağlamadaki ara perdeler gitarda yoktur; Anadolu rock gitaristleri bunu teli yarım perdeden AZ bükerek taklit eder. Ses ne bir perde ne yarım perde: tam arada.
+q: E Hicaz (Frig dominant) gamında E'den sonraki nota? | F | F# | G | D#
+q: Çeyrek ses bend kaç yarım ses yükseltir? | Yarım yarım ses (0,5) | Bir yarım ses | Tam ses | Hiç
+g: scalespell keys=E,A,D types=phrygdom n=3
+g: scale key=E type=phrygdom pos=0 bpm=60 dur=q
+g: path s=1 f=8 p=0,0.5,0 title="1. tel 8: çeyrek ses bük, tut, bırak"
+g: path s=2 f=6 p=0,0.5 title="2. tel 6: çeyrek ses (koma) bend"
+
 # u20 | Minör Gamlar ve Simetrik Gamlar | Armonik, melodik, tam ses, azalmış
 ## u20a | Üç minör
 > DOĞAL minör: 1 2 b3 4 5 b6 b7. ARMONİK minör: 7'yi yükseltir (1 2 b3 4 5 b6 7) — böylece V akoru majör/dominant olur ve güçlü bir çekim doğar. Klasik ve neo-klasik metal sesi.
@@ -789,6 +840,43 @@ q: 12. perdedeki doğal armonik hangi aralıkta çıkar? | Oktav | Beşli | İki
 q: 7. perdedeki doğal armonik açık telin neyidir? | Oktav + beşli | Oktav | İki oktav | Büyük üçlü
 g: seq bpm=60 tab="6:12/q 5:12/q 4:12/q 3:12/q 2:12/q 1:12/q" title="12. perde armonikler (oktav)"
 
+## u22g | Tremolo picking
+> TREMOLO PICKING: aynı notayı alternatif pena ile çok hızlı ve EŞİT tekrarlamak. Hareket bilekten gelir, pena teli çok az geçer. Önce 16'lıkla metronoma oturt, sonra hızlandır. Buckethead, surf rock, metal.
+q: Tremolo picking'de hareket nereden gelir? | Bilekten, küçük hareketle | Omuzdan | Sol elden | Parmak uçlarından
+g: strum p="DUDUDUDUDUDUDUDU" grid=16 bpm=60 bars=2 tol=70 title="Bir notayı tut, 16'lık tremolo (60 BPM)"
+g: strum p="DUDUDUDUDUDUDUDU" grid=16 bpm=75 bars=2 tol=60 title="16'lık tremolo (75 BPM)"
+g: strum p="DUDUDUDUDUDUDUDU" grid=16 bpm=90 bars=2 tol=50 title="16'lık tremolo (90 BPM)"
+
+## u22h | Trill
+> TRILL: iki nota arasında sadece sol elle (hammer-on + pull-off) çok hızlı gidip gelmek; pena yalnızca ilk notada. Buckethead ve Zakk Wylde sololarında uzun trill'ler var.
+g: seq bpm=60 tab="1:5/s 1:7h/s 1:5p/s 1:7h/s 1:5p/s 1:7h/s 1:5p/s 1:7h/s" title="1. tel 5-7 trill (16'lık, sadece ilk notaya pena)"
+g: seq bpm=72 tab="2:5/s 2:8h/s 2:5p/s 2:8h/s 2:5p/s 2:8h/s 2:5p/s 2:8h/s" title="2. tel 5-8 trill (72 BPM)"
+g: seq bpm=84 tab="3:7/s 3:9h/s 3:7p/s 3:9h/s 3:7p/s 3:9h/s 3:7p/s 3:9h/s" title="3. tel 7-9 trill (84 BPM)"
+
+## u22i | Pinch armonik
+> PİNCH (yapay) ARMONİK: pena teli vururken başparmağın kenarı hemen arkasından tele sürtünür; temel ses söner, üst armonik "çığlık" gibi çıkar. Köprü manyetiği ve distortion en kolayı. Penayı manyetiklere doğru kaydırdıkça farklı armonik çıkar. No More Tears'taki Zakk Wylde çığlıkları budur.
+q: Pinch armonik neyle yapılır? | Pena + başparmağın kenarı | Sol el parmağıyla perde teline değmek | Vibrato koluyla | Slide borusuyla
+g: pinch s=3 f=5
+g: pinch s=3 f=7
+g: pinch s=2 f=8
+
+## u22j | Pedal nota riffleri
+> PEDAL NOTA: bir nota (genelde boş tel ya da aynı perde) sürekli dönülen "zemin" olur, diğer notalar onun üstünde hareket eder. Buckethead, Metallica ve Ozzy riffleri; aynı zamanda hızlı alternatif pena çalışması.
+g: seq bpm=70 tab="1:12/s 1:7/s 1:12/s 1:8/s 1:12/s 1:10/s 1:12/s 1:8/s" title="1. telde 12. perde pedal"
+g: seq bpm=70 tab="6:0/s 6:5/s 6:0/s 6:7/s 6:0/s 6:8/s 6:0/s 6:7/s" title="Boş E pedalı (metal riffi)"
+g: seq bpm=85 tab="6:0/s 6:5/s 6:0/s 6:7/s 6:0/s 6:8/s 6:0/s 6:7/s" rep=2 title="Boş E pedalı (85 BPM)"
+
+## u22k | Vibrato kolu ve killswitch
+> VİBRATO KOLU (whammy): köprüdeki kol aşağı bastırılınca tellerin gerginliği azalır, ses İNER (dive); bırakınca geri gelir. Hafifçe sallamak kol vibratosudur. Gitarında kol yoksa (Les Paul gibi) bu alıştırmaları "Mikrofon yok" ile geçebilirsin.
+> ---
+> KILLSWITCH: sesi anlık kesen düğme. Nota çalarken ritmik basınca "kekeleyen" bir ses çıkar; Buckethead'in imzası. Killswitch yoksa: iki manyetikli gitarda birinin volume'ünü sıfırla ve seçici anahtarı ritmik oynat, ya da volume düğmesini hızla aç-kapa.
+q: Vibrato kolu aşağı bastırılınca ne olur? | Ses iner | Ses yükselir | Ses kesilir | Akort sabit kalır
+q: Killswitch'in yokluğunda aynı etki nasıl yapılır? | Bir manyetiğin volume'ü sıfırken seçiciyi oynatarak | Teli bükerek | Penayı bırakarak | Akordu indirerek
+g: path s=3 f=9 p=0,-2,0 title="Vibrato kolu: 3. tel 9'u çal, kolla tam ses indir, geri bırak"
+g: path s=6 f=5 p=0,-5,0 title="Dalış (dive): kalın tel 5'i çal, kolla 2,5 ses indir, geri gel"
+g: strum p="X.X.X.X." bpm=60 bars=2 title="Killswitch: bir notayı tut, her vuruşta sesi kesip geri aç"
+g: strum p="XXXXXXXX" bpm=70 bars=2 title="Killswitch sekizlikle (70 BPM)"
+
 # u23 | İleri Armoni | İkincil dominant, ödünç akor, ikame, ses yürütme
 ## u23a | İkincil dominantlar
 > Her majör veya minör diyatonik akorun önüne kendi V7'si konabilir: buna İKİNCİL DOMİNANT denir. C majörde Am'nin dominantı E7'dir (V7/vi). Dm'nin dominantı A7 (V7/ii).
@@ -858,6 +946,22 @@ q: Gain arttıkça ne olur? | Sustain artar, dinamik azalır | Ses temizlenir | 
 q: "ff" ne demektir? | Çok güçlü | Çok hafif | Hızlı | Yavaşlayarak
 q: Crescendo ne demektir? | Giderek güçlenerek | Giderek hafifleyerek | Hızlanarak | Kesik kesik
 g: strum p="X.XUX.XU" bpm=70 bars=2
+
+## u25d | Wah pedalı ve volume swell
+> WAH PEDALI: ayakla bir filtrenin frekansını taramak; topuk = koyu ("u"), parmak ucu = parlak ("a"), gitar "vah" diye konuşur. Ritimde her vuruşta topuktan parmağa (Hendrix), soloda notayı vurgulamak için (Slash, Zakk Wylde). Yarı açık bırakılan wah ayrı bir tondur (cocked wah).
+> ---
+> VOLUME SWELL: notayı volume düğmesi KISIKKEN çal, sonra serçe parmağınla düğmeyi yavaşça aç; vuruş sesi kaybolur, ses keman gibi kabarır. Uygulama vuruş duymadan yükselmeyi kontrol eder.
+q: Wah'ta parmak ucuna basınca ton nasıl olur? | Parlak (tiz) | Koyu (bas) | Sessiz | Distortion artar
+q: Volume swell'de neden ses kısıkken çalınır? | Vuruş (atak) duyulmasın diye | Akort için | Distortion için | Tel kopmasın diye
+g: strum p="D.D.D.D." bpm=70 bars=2 title="Wah ile ritim: her vuruşta pedalı topuktan parmak ucuna götür (pedal yoksa sadece ritim)"
+g: swell s=2 f=10
+g: swell s=1 f=12
+
+## u25e | Slide (bottleneck) gitar
+> SLIDE: parmağa takılan cam ya da metal boru teli BASMAZ, perde telinin TAM ÜSTÜNDE tele değer. Perdenin arkasında kalırsa ses falso olur. Arkadaki telleri sol elin diğer parmaklarıyla, sağ el avucuyla sustur. Duane Allman (Layla'nın son bölümü) açık akortlarla çalardı.
+q: Slide borusu nereye konur? | Perde telinin tam üstüne | Perdenin ortasına | Perdenin arkasına | Köprüye
+g: seq bpm=60 tab="3:5/h 3:7s/h 3:9s/h 3:7s/h" title="Slide: 3. telde 5 → 7 → 9 → 7 (boru perde telinin üstünde)"
+g: seq bpm=60 tab="2:10/q 2:12s/q 1:12/h 1:10s/h" title="Slide ile iki tel"
 
 # u26 | Beste, Doğaçlama ve Final | Riff yaz, solo kur, ustalık sınavı
 ## u26a | Riff yazmak

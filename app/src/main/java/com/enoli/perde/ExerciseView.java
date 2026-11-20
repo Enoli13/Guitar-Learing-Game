@@ -1242,6 +1242,9 @@ public class ExerciseView extends LinearLayout {
 
     // ------------------------------------------------------------------ BEND
     private void buildBend() {
+        if (ex.bendPath != null) { buildPath(); return; }
+        if (ex.harmonic) { buildPinch(); return; }
+        if (ex.swell) { buildSwell(); return; }
         addVisuals();
         meter = new Views.Meter(ctx);
         meter.big = Theory.SHARP[Theory.pc((int) ex.bendTarget)];
@@ -1273,6 +1276,130 @@ public class ExerciseView extends LinearLayout {
                 if (midi > ex.bendTarget + 0.6f) { done(false, "Fazla büktün — hedefi aştın"); return; }
                 if (Math.abs(midi - ex.bendTarget) < 0.3f) { if (++hold[0] >= 9) done(true, "Bend tam hedefte!"); }
                 else hold[0] = 0;
+            }
+        });
+        addSkipMic();
+    }
+
+    private static String semiName(float v) {
+        if (v == 0) return "basılan perde";
+        String dir = v > 0 ? "yukarı" : "aşağı";
+        float a = Math.abs(v);
+        String amt = a == 0.5f ? "çeyrek ses" : a == 1 ? "yarım ses" : a == 2 ? "tam ses" : a == 3 ? "1,5 ses" : (a / 2) + " ses";
+        return amt + " " + dir;
+    }
+
+    /** Perde yolu: sırayla her hedef perdeye ulaşıp kısa süre tutmak (bend–bırak, ön bend, dalış, çeyrek ses). */
+    private void buildPath() {
+        addVisuals();
+        final float base = Theory.OPEN[ex.bendString] + ex.bendFret;
+        final float[] path = ex.bendPath;
+        StringBuilder plan = new StringBuilder();
+        for (int i = 0; i < path.length; i++) plan.append(i == 0 ? "" : "  →  ").append(semiName(path[i]));
+        addView(Ui.text(ctx, "Sıra: " + plan, 15, Ui.YELLOW, true), Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 4, 4));
+        meter = new Views.Meter(ctx);
+        meter.small = "Adım 1/" + path.length;
+        meter.big = semiName(path[0]);
+        addView(meter);
+        addStatus(path[0] != 0 ? "🎤 Önce sessizce bük, SONRA çal" : "🎤 Notayı çal");
+        final int[] step = {0}, hold = {0}, wrong = {0};
+        final boolean[] heard = {false};
+        final long deadline = System.nanoTime() + 30_000_000_000L;
+        final float tol = 0.28f;
+        listen(new AudioIn.Listener() {
+            public void onNote(long n, float m, boolean a) {}
+            public void onOnset(long n, float db) {}
+            public void onFrame(long n, float midi, float c, float db) {
+                if (System.nanoTime() > deadline) { done(false, "Süre doldu — adım " + (step[0] + 1) + " (" + semiName(path[step[0]]) + ") tamamlanmadı"); return; }
+                if (midi < 0) { hold[0] = 0; return; }
+                showHeard(midi);
+                float target = base + path[step[0]];
+                if (!heard[0]) {
+                    heard[0] = true;
+                    if (path[0] != 0 && Math.abs(midi - base) < 0.3f) { heard[0] = false; if (++wrong[0] > 6) done(false, "Ön bend: teli ÇALMADAN önce bükmen gerekiyordu; ilk duyulan ses bükülmüş olmalı."); return; }
+                }
+                if (Math.abs(Theory.pc(Math.round(midi)) - Theory.pc(Math.round(base))) > 0 && step[0] == 0 && Math.abs(midi - target) > 1.6f && Math.abs(midi - base) > 1.6f) {
+                    if (++wrong[0] > 12) { done(false, "Yanlış perde: " + Theory.midiName(Math.round(midi)) + ". " + Theory.STRING_NAME[ex.bendString] + " " + ex.bendFret + ". perdeden başla"); }
+                    return;
+                }
+                float prev = step[0] == 0 ? base : base + path[step[0] - 1];
+                float span = target - prev;
+                meter.progress = span == 0 ? 1 : Math.max(0, Math.min(1, (midi - prev) / span));
+                meter.invalidate();
+                if (Math.abs(midi - target) < tol) {
+                    if (++hold[0] >= 6) {
+                        step[0]++; hold[0] = 0;
+                        if (step[0] >= path.length) { done(true, "Bütün adımlar tam yerinde!"); return; }
+                        meter.small = "Adım " + (step[0] + 1) + "/" + path.length;
+                        meter.big = semiName(path[step[0]]);
+                        status.setText("✓ Şimdi: " + semiName(path[step[0]]));
+                        status.setTextColor(Ui.GREEN);
+                    }
+                } else hold[0] = 0;
+            }
+        });
+        addSkipMic();
+    }
+
+    /** Pinch armonik: basılan sesin üst armoniklerinden biri (oktav, oktav+beşli, iki oktav ...) duyulmalı. */
+    private void buildPinch() {
+        addVisuals();
+        final float base = Theory.OPEN[ex.bendString] + ex.bendFret;
+        meter = new Views.Meter(ctx);
+        meter.big = "✦";
+        meter.small = "Armonik bekleniyor";
+        addView(meter);
+        addStatus("🎤 Penayı tutarken başparmağının kenarını tele değdir");
+        final int[] plain = {0}, hold = {0};
+        final long deadline = System.nanoTime() + 30_000_000_000L;
+        final int[] HARM = {12, 19, 24, 28, 31, 34, 36};
+        listen(new AudioIn.Listener() {
+            public void onNote(long n, float m, boolean a) {}
+            public void onOnset(long n, float db) {}
+            public void onFrame(long n, float midi, float c, float db) {
+                if (System.nanoTime() > deadline) { done(false, "Süre doldu. Penayı daha az tut, başparmak kenarı tele değsin; distortion açıkken daha kolay."); return; }
+                if (midi < 0) { hold[0] = 0; return; }
+                showHeard(midi);
+                float d = midi - base;
+                boolean harm = false;
+                for (int k : HARM) if (Math.abs(d - k) < 0.45f) harm = true;
+                if (harm) { if (++hold[0] >= 4) done(true, "Pinch armonik! (" + Math.round(d) + " yarım ses yukarıda çınladı)"); return; }
+                hold[0] = 0;
+                if (Math.abs(d) < 0.4f && ++plain[0] % 40 == 0) { status.setText("Bu normal nota. Pena teli vururken başparmak hemen arkasından tele sürtünsün."); status.setTextColor(Ui.YELLOW); }
+            }
+        });
+        addSkipMic();
+    }
+
+    /** Volume swell: ses vuruşsuz, sessizlikten yavaşça yükselmeli. */
+    private void buildSwell() {
+        addVisuals();
+        final float base = Theory.OPEN[ex.bendString] + ex.bendFret;
+        meter = new Views.Meter(ctx);
+        meter.big = "◢";
+        meter.small = "Ses yükselişi";
+        addView(meter);
+        addStatus("🎤 Volume kısık: notayı çal, sonra sesi yavaşça aç");
+        final long[] riseStart = {0};
+        final float[] lastDb = {-90};
+        final long deadline = System.nanoTime() + 30_000_000_000L;
+        listen(new AudioIn.Listener() {
+            public void onNote(long n, float m, boolean a) {}
+            public void onOnset(long t, float db) {
+                if (riseStart[0] == 0 && db > -30) { status.setText("Vuruş duyuldu — ses sıfırdan başlamalı. Volume'ü kıs, tekrar dene."); status.setTextColor(Ui.YELLOW); }
+            }
+            public void onFrame(long n, float midi, float c, float db) {
+                if (System.nanoTime() > deadline) { done(false, "Süre doldu: ses en az yarım saniyede, vuruşsuz yükselmeli."); return; }
+                boolean onPitch = midi > 0 && Theory.pc(Math.round(midi)) == Theory.pc(Math.round(base));
+                if (db < -48) { riseStart[0] = 0; lastDb[0] = db; meter.progress = 0; meter.invalidate(); return; }
+                if (riseStart[0] == 0 && lastDb[0] < -48 && db < -38) riseStart[0] = n;
+                lastDb[0] = db;
+                meter.progress = Math.max(0, Math.min(1, (db + 48) / 28f)); meter.invalidate();
+                if (riseStart[0] != 0 && db > -24 && onPitch) {
+                    long ms = (n - riseStart[0]) / 1_000_000L;
+                    if (ms >= 350) done(true, "Yumuşak swell! (" + ms + " ms'de yükseldi)");
+                    else { riseStart[0] = 0; status.setText("Çok hızlı açıldı (" + ms + " ms) — daha yavaş çevir."); status.setTextColor(Ui.YELLOW); }
+                }
             }
         });
         addSkipMic();

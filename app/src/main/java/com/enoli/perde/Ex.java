@@ -78,6 +78,9 @@ public class Ex implements Cloneable {
     public int bendString, bendFret;
     public float bendTarget;
     public int bendSemis;
+    public float[] bendPath;      // perde yolu (başlangıç perdesine göre yarım ses), ör. 0,2,0 = bend ve bırak
+    public boolean harmonic;      // pinch armonik
+    public boolean swell;         // volume swell
 
     public static class Note {
         public int string, fret, midi;  // string 1..6, fret -1 = bilinmiyor

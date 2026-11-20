@@ -191,6 +191,16 @@ public final class Views {
                 c.drawRect(x - tw / 2, y - 9 * d, x + tw / 2, y + 9 * d, p);
                 p.setColor(col);
                 c.drawText(label, x, y + 5 * d, p);
+                if (n.strs != null && !hide) for (int k = 0; k < n.strs.length; k++) {
+                    if (n.strs[k] == n.string && n.frets[k] == n.fret) continue;
+                    float y2 = top + (n.strs[k] - 1) * gap;
+                    String l2 = String.valueOf(n.frets[k]);
+                    float tw2 = p.measureText(l2) + 8 * d;
+                    p.setColor(Ui.BG);
+                    c.drawRect(x - tw2 / 2, y2 - 9 * d, x + tw2 / 2, y2 + 9 * d, p);
+                    p.setColor(col);
+                    c.drawText(l2, x, y2 + 5 * d, p);
+                }
                 // süre çubuğu
                 p.setColor(Ui.darker(col, 0.5f));
                 c.drawRect(x - 6 * d, top + 5 * gap + 12 * d, x - 6 * d + Math.max(4 * d, n.dur * pxPerBeat - 6 * d), top + 5 * gap + 16 * d, p);

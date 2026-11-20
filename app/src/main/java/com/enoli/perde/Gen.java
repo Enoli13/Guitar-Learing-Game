@@ -157,6 +157,9 @@ public final class Gen {
             case "scale": return scale(p);
             case "arp": return arp(p);
             case "chord": return chord(p, r);
+            case "path": return path(p);
+            case "pinch": return pinch(p);
+            case "swell": return swell(p);
             case "changes": return changes(p);
             case "strum": return strum(p);
             case "tap": { p.put("tap", "1"); return strum(p); }
@@ -598,6 +601,24 @@ public final class Gen {
             String[] a = tok.split("/");
             float dur = durOf(a.length > 1 ? a[1] : "q");
             if (a[0].equals("r")) { beat += dur; continue; }
+            if (a[0].contains("+")) {
+                // çift ses / akor sütunu: "2:8+1:8"
+                String[] parts = a[0].split("\\+");
+                Ex.Note n = null;
+                int[] ss = new int[parts.length], ff = new int[parts.length];
+                for (int i = 0; i < parts.length; i++) {
+                    String[] q = parts[i].split(":");
+                    ss[i] = Integer.parseInt(q[0]); ff[i] = Integer.parseInt(q[1].replaceAll("[^0-9]", ""));
+                }
+                int lo = 0;
+                for (int i = 1; i < parts.length; i++) if (Theory.OPEN[ss[i]] + ff[i] < Theory.OPEN[ss[lo]] + ff[lo]) lo = i;
+                n = new Ex.Note(ss[lo], ff[lo], beat, dur);
+                n.strs = ss; n.frets = ff;
+                for (int i = 0; i < parts.length; i++) if (i != lo) n.alts = TabImport.append(n.alts, Theory.OPEN[ss[i]] + ff[i]);
+                l.add(n);
+                beat += dur;
+                continue;
+            }
             String[] sf = a[0].split(":");
             int s = Integer.parseInt(sf[0]);
             String fs = sf[1];
@@ -749,6 +770,7 @@ public final class Gen {
         e.chord = nm;
         e.chordShape = Theory.shapeFor(nm);
         e.prompt = Theory.chordTr(nm) + " akorunu bas ve bir kez vur";
+        if (p.containsKey("title")) e.prompt = p.get("title").replace("{c}", nm);
         return e;
     }
 
@@ -1032,6 +1054,39 @@ public final class Gen {
         e.fretFrom = Math.max(0, e.bendFret - 2); e.fretTo = e.bendFret + 4;
         e.prompt = Theory.STRING_NAME[e.bendString] + " " + e.bendFret + ". perdeyi çal ve teli " + (e.bendSemis == 1 ? "yarım" : e.bendSemis == 2 ? "tam" : "1,5") +
                 " ses bükerek " + Theory.SHARP[Theory.pc((int) e.bendTarget)] + " perdesine ulaştır, orada tut";
+        return e;
+    }
+
+    /** Perde yolu: bend–bırak, ön bend, vibrato kolu dalışı, çeyrek ses ... p = başlangıç perdesine göre yarım ses hedefleri. */
+    static Ex path(Map<String, String> p) {
+        Ex e = bend(p);
+        String[] a = p.getOrDefault("p", "0,2,0").split(",");
+        e.bendPath = new float[a.length];
+        for (int i = 0; i < a.length; i++) e.bendPath[i] = Float.parseFloat(a[i].trim());
+        float mx = 0, mn = 0;
+        for (float v : e.bendPath) { mx = Math.max(mx, v); mn = Math.min(mn, v); }
+        e.fretDots.clear();
+        e.fretDots.add(new int[]{e.bendString, e.bendFret});
+        if (mx >= 1) e.fretDots.add(new int[]{e.bendString, e.bendFret + Math.round(mx)});
+        e.prompt = p.getOrDefault("title", "Perde yolunu izle");
+        return e;
+    }
+
+    static Ex pinch(Map<String, String> p) {
+        Ex e = bend(p);
+        e.harmonic = true;
+        e.fretDots.clear();
+        e.fretDots.add(new int[]{e.bendString, e.bendFret});
+        e.prompt = p.getOrDefault("title", Theory.STRING_NAME[e.bendString] + " " + e.bendFret + ". perde: pinch (yapay) armonik çıkar");
+        return e;
+    }
+
+    static Ex swell(Map<String, String> p) {
+        Ex e = bend(p);
+        e.swell = true;
+        e.fretDots.clear();
+        e.fretDots.add(new int[]{e.bendString, e.bendFret});
+        e.prompt = p.getOrDefault("title", "Volume swell: ses kısıkken çal, sonra sesi yavaşça aç");
         return e;
     }
 
