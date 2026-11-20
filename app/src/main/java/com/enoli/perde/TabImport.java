@@ -257,7 +257,7 @@ public final class TabImport {
         return got;
     }
 
-    static int[] append(int[] a, int v) {
+    public static int[] append(int[] a, int v) {
         if (a == null) return new int[]{v};
         int[] b = java.util.Arrays.copyOf(a, a.length + 1);
         b[a.length] = v;
