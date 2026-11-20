@@ -269,6 +269,14 @@ public class SongActivity extends Activity implements ExerciseView.Host {
             while ((n = is.read(buf)) > 0) { o.write(buf, 0, n); if (o.size() > 25 * 1024 * 1024) throw new IllegalStateException("dosya çok büyük"); }
             data = o.toByteArray();
         } catch (Exception e) { showError("Dosya okunamadı: " + e.getMessage()); return; }
+        if (TabPack.isPack(data)) {
+            TabPack.Result res = new TabPack.Result();
+            TabPack.importFile(prog, Curriculum.get(this), "paket.zip", data, res);
+            showError("📦 Bu bir tab paketi: " + res.ok + " şarkının tab'ı Şarkı Yolu'na yüklendi. Geri dönüp şarkıları açabilirsin.");
+            String mine = stored();
+            if (mine != null && !mine.trim().isEmpty()) importStored(mine);
+            return;
+        }
         SongData sd;
         try { sd = SongFile.load(data); }
         catch (Exception e) { showError(e.getMessage() == null ? "Dosya çözülemedi." : "Dosya çözülemedi: " + e.getMessage()); return; }

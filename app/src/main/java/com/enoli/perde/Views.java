@@ -526,6 +526,81 @@ public final class Views {
     }
 
 
+    /** Şarkı Yolu'nda şarkı düğümü: plak görünümü, öğrenilme halkası, taç. */
+    public static class SongNode extends View {
+        public int color = Ui.PURPLE; public float value; public boolean locked, current, bonus, noTab, learned;
+        private final Paint p = paint(0); private final float d; private float spin, pulse;
+        public SongNode(Context c) { super(c); d = c.getResources().getDisplayMetrics().density; }
+        @Override protected void onMeasure(int w, int h) { float k = bonus ? 0.8f : 1f; setMeasuredDimension((int) (110 * d * k), (int) (118 * d * k)); }
+        @Override protected void onDraw(Canvas c) {
+            float k = bonus ? 0.8f : 1f;
+            float cx = getWidth() / 2f, cy = 52 * d * k, r = 42 * d * k;
+            int col = locked ? 0xFF3A3E52 : color;
+            if (current && !locked) {
+                pulse = (pulse + 0.03f) % 1f;
+                p.setColor((((int) (80 * (1 - pulse))) << 24) | (col & 0xFFFFFF));
+                c.drawCircle(cx, cy, r + 14 * d * pulse, p);
+            }
+            // gölge
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(Ui.darker(col, 0.6f));
+            c.drawCircle(cx, cy + 5 * d, r, p);
+            // plak
+            p.setColor(0xFF1A1B22);
+            c.drawCircle(cx, cy, r, p);
+            p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(1 * d); p.setColor(0x33FFFFFF);
+            for (int i = 1; i <= 4; i++) c.drawCircle(cx, cy, r * (0.45f + i * 0.12f), p);
+            if (!locked && current) { spin = (spin + 2f) % 360; }
+            c.save(); c.rotate(spin, cx, cy);
+            p.setColor(0x55FFFFFF); p.setStrokeWidth(2 * d);
+            c.drawArc(new RectF(cx - r * 0.8f, cy - r * 0.8f, cx + r * 0.8f, cy + r * 0.8f), 200, 40, false, p);
+            c.restore();
+            // etiket
+            p.setStyle(Paint.Style.FILL); p.setColor(col);
+            c.drawCircle(cx, cy, r * 0.42f, p);
+            p.setColor(locked ? 0xFF6A6F86 : Color.WHITE); p.setTextAlign(Paint.Align.CENTER);
+            p.setTextSize(22 * d * k); p.setTypeface(Typeface.DEFAULT_BOLD);
+            c.drawText(locked ? "🔒" : learned ? "👑" : bonus ? "+" : "🎸", cx, cy + 8 * d * k, p);
+            // öğrenilme halkası
+            if (!locked) {
+                p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(5 * d * k); p.setStrokeCap(Paint.Cap.ROUND);
+                p.setColor(0x44FFFFFF);
+                RectF rr = new RectF(cx - r - 6 * d, cy - r - 6 * d, cx + r + 6 * d, cy + r + 6 * d);
+                c.drawArc(rr, 0, 360, false, p);
+                p.setColor(learned ? Ui.YELLOW : Ui.GREEN);
+                if (value > 0) c.drawArc(rr, -90, 360 * Math.min(1, value), false, p);
+                p.setStyle(Paint.Style.FILL);
+            }
+            if (noTab && !locked) {
+                p.setColor(Ui.RED);
+                RectF b = new RectF(cx + r * 0.35f, cy - r - 4 * d, cx + r + 14 * d, cy - r + 14 * d);
+                c.drawRoundRect(b, 8 * d, 8 * d, p);
+                p.setColor(Color.WHITE); p.setTextSize(10 * d); p.setTextAlign(Paint.Align.CENTER);
+                c.drawText("TAB?", b.centerX(), b.centerY() + 3.5f * d, p);
+            }
+            if (current && !locked) postInvalidateDelayed(33);
+        }
+    }
+
+    /** Ünite sandığı düğümü. */
+    public static class ChestNode extends View {
+        public boolean ready, opened; private final Paint p = paint(0); private final float d; private float t;
+        public ChestNode(Context c) { super(c); d = c.getResources().getDisplayMetrics().density; }
+        @Override protected void onMeasure(int w, int h) { setMeasuredDimension((int) (80 * d), (int) (70 * d)); }
+        @Override protected void onDraw(Canvas c) {
+            float cx = getWidth() / 2f, cy = 36 * d;
+            float wob = ready && !opened ? (float) Math.sin((t += 0.15f)) * 4 : 0;
+            c.save(); c.rotate(wob, cx, cy + 20 * d);
+            int body = opened ? 0xFF6A4B2A : ready ? 0xFFB87333 : 0xFF4A4E62;
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(Ui.darker(body, 0.7f)); c.drawRoundRect(new RectF(cx - 28 * d, cy - 4 * d, cx + 28 * d, cy + 26 * d), 6 * d, 6 * d, p);
+            p.setColor(body); c.drawRoundRect(new RectF(cx - 28 * d, cy - (opened ? 30 : 20) * d, cx + 28 * d, cy - 2 * d), 8 * d, 8 * d, p);
+            p.setColor(ready ? Ui.YELLOW : 0xFF6A6F86); c.drawRect(cx - 5 * d, cy - 8 * d, cx + 5 * d, cy + 8 * d, p);
+            c.restore();
+            if (ready && !opened) postInvalidateDelayed(40);
+        }
+    }
+
     // ======================= RİTİM NOTASI (tek çizgi) =======================
     public static class RhythmNotation extends View {
         public static class Item {
