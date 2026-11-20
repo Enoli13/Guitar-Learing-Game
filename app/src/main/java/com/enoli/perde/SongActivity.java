@@ -447,7 +447,7 @@ public class SongActivity extends Activity implements ExerciseView.Host {
         if (total <= 0) { partLabel.setText("Tab'ı yükleyince parçayı işaretleyip çalışmaya başla."); partLabel.setTextColor(Ui.YELLOW); return; }
         int[] rg = SongProgress.part(prog, song, total);
         float f = SongProgress.learned(prog, song);
-        String need = parsed != null && parsed.tempo > 0 ? " (en az " + Math.round(parsed.tempo * 0.8f) + " BPM ile)" : "";
+        String need = parsed != null && parsed.tempo > 0 ? " (en az " + Math.round(Math.min(parsed.tempo * 0.8f, 180)) + " BPM ile)" : "";
         partLabel.setText((f >= 0.9f ? "✓ Öğrenildi! " : "Öğrenilen: %" + Math.round(f * 100) + "  •  ") + "parça ölçü " + (rg[0] + 1) + "–" + (rg[1] + 1) + need);
         partLabel.setTextColor(f >= 0.9f ? Ui.GREEN : Ui.TEXT);
         if (preview != null) { preview.selFrom = fromM; preview.selTo = toM; preview.invalidate(); }
@@ -631,7 +631,7 @@ public class SongActivity extends Activity implements ExerciseView.Host {
             h.postDelayed(this::nextDrill, pass ? 1100 : 3200);
             return;
         }
-        if (pass && lastStep == 3 && song != null && parsed != null && (parsed.tempo <= 0 || bpm >= parsed.tempo * 0.8f - 0.5f)) {
+        if (pass && lastStep == 3 && song != null && parsed != null && (parsed.tempo <= 0 || bpm >= Math.min(parsed.tempo * 0.8f, 180) - 0.5f)) {
             SongProgress.addPassed(prog, song, fromM, toM);
             updatePart();
         }

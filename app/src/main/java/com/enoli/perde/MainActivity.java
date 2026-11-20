@@ -59,7 +59,56 @@ public class MainActivity extends Activity {
         render();
     }
 
-    @Override protected void onActivityResult(int rq, int rs, Intent d) { super.onActivityResult(rq, rs, d); render(); }
+    @Override protected void onActivityResult(int rq, int rs, Intent d) {
+        super.onActivityResult(rq, rs, d);
+        if (rq == 55 && rs == RESULT_OK && d != null) {
+            java.util.List<android.net.Uri> uris = new java.util.ArrayList<>();
+            if (d.getClipData() != null) for (int i = 0; i < d.getClipData().getItemCount(); i++) uris.add(d.getClipData().getItemAt(i).getUri());
+            else if (d.getData() != null) uris.add(d.getData());
+            importPack(uris);
+        }
+        render();
+    }
+
+    /** Tab paketi: zip içindeki ya da tek tek seçilen dosyalar, adı şarkı kimliğiyle eşleşen şarkılara yüklenir. */
+    private void importPack(java.util.List<android.net.Uri> uris) {
+        int ok = 0; java.util.List<String> miss = new java.util.ArrayList<>();
+        for (android.net.Uri u : uris) {
+            try (java.io.InputStream is = getContentResolver().openInputStream(u)) {
+                byte[] data = MusicXml.readAll(is);
+                String name = u.getLastPathSegment() == null ? "" : u.getLastPathSegment();
+                try (android.database.Cursor c = getContentResolver().query(u, new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+                    if (c != null && c.moveToFirst()) name = c.getString(0);
+                } catch (Exception ignored) {}
+                java.util.Map<String, byte[]> files = new java.util.LinkedHashMap<>();
+                if (data.length > 4 && data[0] == 'P' && data[1] == 'K' && Gpif.extract(data) == null && !name.toLowerCase(java.util.Locale.ROOT).endsWith(".mxl")) files.putAll(Zip.read(data));
+                else files.put(name, data);
+                for (java.util.Map.Entry<String, byte[]> e : files.entrySet()) {
+                    String base = e.getKey().replaceAll(".*/", "");
+                    String stem = base.contains(".") ? base.substring(0, base.lastIndexOf('.')) : base;
+                    String key = stem.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+                    Curriculum.Song song = null;
+                    for (Curriculum.Song sg : cur.songs) if (sg.id().equals(key)) song = sg;
+                    if (song == null) { miss.add(base); continue; }
+                    String txt;
+                    if (base.endsWith(".perde") || base.endsWith(".txt")) txt = new String(e.getValue(), java.nio.charset.StandardCharsets.UTF_8);
+                    else {
+                        SongData sd = SongFile.load(e.getValue());
+                        if (sd == null) txt = new String(e.getValue(), java.nio.charset.StandardCharsets.UTF_8);
+                        else { java.util.List<Integer> g = sd.guitarTracks(); if (g.isEmpty()) { miss.add(base); continue; } txt = TabImport.toText(sd.toResult(g.get(0))); }
+                    }
+                    TabImport.Result r = TabImport.parseAny(txt);
+                    if (r.error != null) { miss.add(base); continue; }
+                    prog.songTabs.put(song.id(), txt);
+                    prog.songTabs.put("len:" + song.id(), String.valueOf(r.measures));
+                    ok++;
+                }
+            } catch (Exception ex) { miss.add(String.valueOf(u.getLastPathSegment())); }
+        }
+        prog.save();
+        new AlertDialog.Builder(this).setTitle("Tab paketi").setMessage(ok + " şarkının tab'ı yüklendi." + (miss.isEmpty() ? "" : "\nEşleşmeyen dosyalar: " + String.join(", ", miss)))
+                .setPositiveButton("Tamam", null).show();
+    }
 
     private void render() {
         prog.rollDay();
@@ -360,6 +409,15 @@ public class MainActivity extends Activity {
             if (!done) open = false;
             if (done) prog.unlock("sarki");
         }
+        Button pack = Ui.secondary(this, "📦 Tab paketini yükle (zip ya da dosyalar)");
+        pack.setOnClickListener(v -> {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            startActivityForResult(i, 55);
+        });
+        col.addView(pack, 1, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 0, 8));
         if (missingTabs > 0) col.addView(Ui.text(this, "📄 Tab'ı eksik şarkı: " + missingTabs + ". Şarkıya dokunup Guitar Pro / MusicXML dosyasını ya da tab metnini yükle.", 13, Ui.ORANGE, false), 1);
         prog.save();
         col.addView(Ui.text(this, "Kendi şarkıların", 20, Ui.TEXT, true), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 18, 6));

@@ -34,7 +34,7 @@ public class Curriculum {
         public Unit unitRef;
         /** Aynı şarkı birden çok ünitede farklı parçasıyla yer alabilir. */
         public String entryKey() { return unit + ":" + id(); }
-        public String id() { return (title + "|" + artist).toLowerCase().replaceAll("[^a-z0-9]", ""); }
+        public String id() { return (title + "|" + artist).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", ""); }
     }
 
     public final List<Unit> units = new ArrayList<>();
