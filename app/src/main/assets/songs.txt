@@ -30,7 +30,7 @@ u16 | Boş Gemiler | Yüzyüzeyken Konuşuruz | Akorlar | 3 | 7'li, add9, sus gi
 u17 | This I Love | Guns N' Roses | Akor yürüyüşü | 3 | Kadanslar ve ilgili minör | Şarkının nerede "durduğunu" (kadans) dinle. | liste
 u18 | Layla (Unplugged) | Eric Clapton | Ana riff ve kıta | 3 | Shuffle hissi, majör/minör pentatonik karışımı | Unplugged versiyonu daha yavaş ve swingli. | liste
 u19 | Mor Yazma | Umut Kaya | Akor yürüyüşü | 3 | Am–F–E yürüyüşünde E üzerindeki Hicaz (Frig dominant) rengi | F'den E'ye inen yarım sesi duy: Frig'in ♭2'si. | liste
-u20 | Sweet Child O' Mine | Guns N' Roses | Solo (ilk bölüm) | 5 | Doğal ve armonik minörün renkleri | Hangi notaların gamın dışına çıktığını işaretle. | liste
+u20 | Sweet Child O' Mine | Guns N' Roses | Solo (ilk bölüm) | 5 | Doğal ve armonik minörün renkleri | Hangi notaların gamın dışına çıktığını işaretle. | liste | m=85
 u20 | Seni Her Gördüğümde | Erkin Koray | Giriş | 3 | E minörde D# (armonik minör) rengi | D# notasının B majör akordundan geldiğini fark et. | liste
 u21 | Soothsayer | Buckethead | Giriş arpejleri | 4 | Akor tonlarıyla melodi kurmak | Her arpejin hangi akordan geldiğini bul. | liste
 c01 | Black Dog | Led Zeppelin | Ana riff | 4 | Ölçü çizgisini aşan kalıp, kayan vurgu | Davul 4/4 sayarken riff kayar: ikisini birlikte say. | öneri

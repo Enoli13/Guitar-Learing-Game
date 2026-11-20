@@ -31,6 +31,7 @@ public class Curriculum {
         public String[] prereqs;
         public int difficulty;
         public boolean suggested, main;
+        public int startMeasure;
         public Unit unitRef;
         /** Aynı şarkı birden çok ünitede farklı parçasıyla yer alabilir. */
         public String entryKey() { return unit + ":" + id(); }
@@ -80,6 +81,7 @@ public class Curriculum {
                 s.difficulty = Integer.parseInt(p[4].trim());
                 s.skills = p[5].trim(); s.tip = p[6].trim();
                 s.suggested = p.length > 7 && p[7].trim().equals("öneri");
+                if (p.length > 8 && p[8].trim().startsWith("m=")) s.startMeasure = Integer.parseInt(p[8].trim().substring(2));
                 for (Unit u : units) if (u.id.equals(s.unit)) s.unitRef = u;
                 if (s.unitRef == null) continue;
                 List<String> pre = new ArrayList<>();

@@ -124,6 +124,15 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
                 queue.add(e);
             }
             for (String s : l.specs) for (Ex e : Gen.make(s, r)) addWithWarmups(e);
+        } else if ("songstep".equals(mode)) {
+            String[] a = id.split(":");
+            Curriculum.Unit u = null;
+            for (Curriculum.Unit x : cur.units) if (x.id.equals(a[0])) u = x;
+            Curriculum.Song song = SongPath.mainSong(cur, u);
+            TabImport.Result tr = SongPath.tab(prog, song);
+            if (u == null || song == null || tr == null) return;
+            SongPath.Step st = SongPath.steps(u, song, tr).get(Integer.parseInt(a[1]));
+            for (Ex e : SongPath.build(u, song, tr, st, r)) { if (needsTiming(e)) addWithWarmups(e); else queue.add(e); }
         } else if ("review".equals(mode)) {
             for (Progress.Card c : prog.dueCards(15)) {
                 List<Ex> l = Gen.make(c.key, r);
@@ -319,6 +328,18 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
             prog.unlock("ilk");
             checkUnitAchievements(l.unit);
             title = "Ders tamamlandı!";
+        } else if ("songstep".equals(mode)) {
+            String[] a = id.split(":");
+            Curriculum.Unit u = null;
+            for (Curriculum.Unit x : cur.units) if (x.id.equals(a[0])) u = x;
+            int i = Integer.parseInt(a[1]);
+            int prev = SongPath.stars(prog, u, i);
+            prog.songTabs.put(SongPath.key(u, i), String.valueOf(Math.max(prev, stars)));
+            boolean fin = i >= SongPath.lessons(u).size();
+            xp = (prev < 0 ? 15 : 8) + Math.min(20, total) + stars * 5 + (fin ? 20 : 0);
+            title = fin ? "Ünite tamamlandı! 👑" : "Şarkı adımı tamamlandı!";
+            prog.unlock("ilk");
+            prog.save();
         } else if ("review".equals(mode)) {
             xp = 5 + gradedKeys.size() * 3;
             title = "Tekrar tamamlandı!";

@@ -319,10 +319,12 @@ public class MainActivity extends Activity {
     @Override protected void onPause() { super.onPause(); if (toolMet != null) { toolMet.stop(); toolMet = null; } }
 
     // ---------------------------------------------------------------- Şarkılar
-    private boolean unitDone(Curriculum.Unit u) {
-        for (Curriculum.Lesson l : u.lessons) if (!l.id.endsWith("_pratik") && !prog.isDone(l.id)) return false;
-        for (Curriculum.Song s : cur.songsOf(u)) if (s.main && !SongProgress.isLearned(prog, s)) return false;
-        return true;
+    private boolean unitDone(Curriculum.Unit u) { return SongPath.unitDone(prog, u); }
+
+    private int countDone(Curriculum.Unit u, List<SongPath.Step> steps) {
+        int c = 0;
+        for (SongPath.Step s : steps) if (!s.fin && SongPath.stars(prog, u, s.index) >= 0) c++;
+        return c;
     }
 
     /** Kişisel derlemede assets/tabs/ içine konmuş tab paketi varsa ilk açılışta otomatik yüklenir. */
@@ -378,16 +380,14 @@ public class MainActivity extends Activity {
         int unitsDone = 0, crowns = 0, missingMain = 0, mainTotal = 0;
         for (Curriculum.Unit u : cur.units) {
             if (unitDone(u)) unitsDone++;
-            for (Curriculum.Song sg : cur.songsOf(u)) {
-                if (SongProgress.isLearned(prog, sg)) crowns++;
-                if (sg.main) { mainTotal++; if (!SongProgress.hasTab(prog, sg)) missingMain++; }
-            }
+            if (unitDone(u)) crowns++;
+            for (Curriculum.Song sg : cur.songsOf(u)) if (sg.main) { mainTotal++; if (!SongProgress.hasTab(prog, sg)) missingMain++; }
         }
         LinearLayout head = Ui.card(this);
         LinearLayout hr = Ui.hbox(this);
         LinearLayout ht = Ui.vbox(this);
         ht.addView(Ui.text(this, "🎵 Şarkı Yolu", 24, Ui.TEXT, true));
-        ht.addView(Ui.text(this, "Yol'daki konular, sevdiğin şarkılarla. Her ünitenin sonunda şarkının parçasını çalınca 👑 ve sandık kazanırsın.", 13, Ui.MUTED, false));
+        ht.addView(Ui.text(this, "Yol'dan ayrı bir yol: aynı konular, ama her adımda konuyu şarkının bir bölümü üzerinden öğrenip o bölümü çalarsın. Ünite sonunda bütün bölümleri birleştirip çalınca 👑 ve sandık.", 13, Ui.MUTED, false));
         hr.addView(ht, Ui.weight(1));
         Views.Ring ring = new Views.Ring(this);
         ring.value = (float) unitsDone / Math.max(1, cur.units.size());
@@ -395,7 +395,7 @@ public class MainActivity extends Activity {
         ring.color = Ui.PURPLE;
         hr.addView(ring, new LinearLayout.LayoutParams(Ui.dp(this, 64), Ui.dp(this, 64)));
         head.addView(hr);
-        head.addView(Ui.text(this, "👑 " + crowns + " şarkı öğrenildi   •   📄 " + (mainTotal - missingMain) + "/" + mainTotal + " ana şarkının tab'ı hazır", 14, Ui.YELLOW, true), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 8, 0));
+        head.addView(Ui.text(this, "👑 " + crowns + " şarkı bölümü öğrenildi   •   📄 " + (mainTotal - missingMain) + "/" + mainTotal + " ana şarkının tab'ı hazır", 14, Ui.YELLOW, true), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 8, 0));
         col.addView(head);
         if (missingMain > 0) {
             LinearLayout pk = Ui.card(this);
@@ -431,62 +431,56 @@ public class MainActivity extends Activity {
             if (main != null) banner.addView(Ui.text(this, "🎸 " + main.title + " — " + main.artist, 15, 0xFFFFFFFF, true));
             if (main != null) banner.addView(Ui.text(this, main.part + " • " + main.skills, 12, 0xE6FFFFFF, false));
             col.addView(bannerRow, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 22, 12));
-            // dersler
-            boolean prevDone = true, allLessons = true, currentSet = false;
-            for (Curriculum.Lesson l : u.lessons) {
-                if (l.id.endsWith("_pratik")) continue;
-                boolean ld = prog.isDone(l.id);
-                final boolean lu = unlocked && (ld || prevDone);
-                boolean isCur = unlocked && !done && lu && !ld && !currentSet;
+            // adımlar: her adım = ünitenin bir konusu + şarkının bir bölümü
+            TabImport.Result tr = SongPath.tab(prog, main);
+            List<SongPath.Step> steps = SongPath.steps(u, main, tr);
+            boolean prevDone = true, currentSet = false;
+            for (SongPath.Step st : steps) {
+                int sStars = SongPath.stars(prog, u, st.index);
+                boolean sd = sStars >= 0;
+                final boolean su = unlocked && (sd || prevDone);
+                boolean isCur = unlocked && !done && su && !sd && !currentSet;
                 if (isCur) currentSet = true;
-                if (!ld) allLessons = false;
-                Views.Node n = new Views.Node(this);
-                n.color = color;
-                n.locked = !lu;
-                n.stars = prog.stars.containsKey(l.id) ? prog.stars.get(l.id) : -1;
-                n.current = isCur;
-                n.glyph = ld ? "✓" : glyphFor(l);
                 FrameLayout row = new FrameLayout(this);
                 FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(Ui.WRAP, Ui.WRAP, Gravity.CENTER_HORIZONTAL);
                 flp.leftMargin = zig[z++ % zig.length] * Ui.dp(this, 52);
-                row.addView(n, flp);
-                n.setOnClickListener(v -> lessonSheet(l, lu));
-                TextView t = Ui.text(this, l.title, 12, lu ? Ui.TEXT : Ui.MUTED, false);
+                String where = st.fromM >= 0 ? "ölçü " + (st.fromM + 1) + (st.toM > st.fromM ? "–" + (st.toM + 1) : "") : "tab gerekli";
+                final Curriculum.Song mainF = main;
+                Runnable go = () -> {
+                    if (tr == null) { SongActivity.open(this, mainF.entryKey(), null); return; }
+                    LessonActivity.start(this, "songstep", u.id + ":" + st.index);
+                };
+                View node;
+                if (st.fin) {
+                    Views.SongNode sn = new Views.SongNode(this);
+                    sn.color = color; sn.locked = !su; sn.noTab = tr == null;
+                    sn.learned = sd; sn.value = sd ? 1 : (float) st.index > 0 ? (float) countDone(u, steps) / (steps.size() - 1) : 0;
+                    sn.current = isCur;
+                    node = sn;
+                } else {
+                    Views.Node n = new Views.Node(this);
+                    n.color = color; n.locked = !su; n.stars = sStars > 0 ? sStars : -1; n.current = isCur;
+                    n.glyph = sd ? "✓" : "🎸";
+                    node = n;
+                }
+                row.addView(node, flp);
+                node.setOnClickListener(v -> {
+                    if (!su) { Ui.shake(v); return; }
+                    new AlertDialog.Builder(this).setTitle((st.fin ? "🏁 " : "🎸 ") + st.title)
+                            .setMessage(mainF == null ? "" : (mainF.title + " — " + mainF.artist + "\n" + (st.fin ? "Bu ünitede öğrendiğin bütün bölümler: " : "Bölüm: ") + where
+                                    + (st.fin ? "" : "\n\nKonu: " + st.lesson.title + "\nÖnce konunun teorisi, sonra bu bölümden sorular, en son bölümü çalmak.")
+                                    + (tr == null ? "\n\n📄 Önce şarkının tab'ını yükle." : "")))
+                            .setPositiveButton(tr == null ? "Tab yükle" : sd ? "Tekrar oyna" : "Başla", (d, w) -> go.run())
+                            .setNegativeButton("Kapat", null).show();
+                });
+                TextView t = Ui.text(this, (st.fin ? "🏁 Final\n" : "") + st.title + "\n" + where, 12, su ? (st.fin && sd ? Ui.YELLOW : Ui.TEXT) : Ui.MUTED, st.fin);
                 t.setGravity(Gravity.CENTER);
-                FrameLayout.LayoutParams tl = new FrameLayout.LayoutParams(Ui.dp(this, 130), Ui.WRAP, Gravity.CENTER_HORIZONTAL);
-                tl.leftMargin = flp.leftMargin; tl.topMargin = Ui.dp(this, 80);
-                if (n.stars <= 0) row.addView(t, tl);
-                if (isCur) { currentRow[0] = row; addMascot(row, flp.leftMargin, "Sıradaki: " + l.title, () -> lessonSheet(l, true)); }
-                col.addView(row);
-                prevDone = ld;
-            }
-            // şarkılar (ana şarkı = ünitenin finali)
-            for (Curriculum.Song sg : ss) {
-                Views.SongNode sn = new Views.SongNode(this);
-                sn.color = color;
-                sn.bonus = !sg.main;
-                sn.locked = !unlocked;
-                sn.noTab = !SongProgress.hasTab(prog, sg);
-                float f = SongProgress.learned(prog, sg);
-                sn.value = Math.min(1, f / 0.9f);
-                sn.learned = f >= 0.9f;
-                boolean isCur = unlocked && !done && sg.main && allLessons && !sn.learned && !currentSet;
-                if (isCur) currentSet = true;
-                sn.current = unlocked && sg.main && !sn.learned && !done;
-                FrameLayout row = new FrameLayout(this);
-                FrameLayout.LayoutParams flp = new FrameLayout.LayoutParams(Ui.WRAP, Ui.WRAP, Gravity.CENTER_HORIZONTAL);
-                flp.leftMargin = zig[z++ % zig.length] * Ui.dp(this, 52);
-                row.addView(sn, flp);
-                String lab = (sg.main ? "" : "Bonus: ") + sg.title + "\n" + (!unlocked ? "🔒" : sn.noTab ? "📄 Tab yükle" : sn.learned ? "👑 Öğrenildi" : "%" + Math.round(f * 100) + " • " + sg.part);
-                TextView t = Ui.text(this, lab, 12, unlocked ? (sn.learned ? Ui.YELLOW : Ui.TEXT) : Ui.MUTED, sg.main);
-                t.setGravity(Gravity.CENTER);
-                FrameLayout.LayoutParams tl = new FrameLayout.LayoutParams(Ui.dp(this, 170), Ui.WRAP, Gravity.CENTER_HORIZONTAL);
-                tl.leftMargin = flp.leftMargin; tl.topMargin = Ui.dp(this, sg.main ? 116 : 94);
-                row.addView(t, tl);
-                if (unlocked) sn.setOnClickListener(v -> SongActivity.open(this, sg.entryKey(), null));
-                else sn.setOnClickListener(v -> Ui.shake(v));
-                if (isCur) { currentRow[0] = row; addMascot(row, flp.leftMargin, sn.noTab ? "Şarkının tab'ını yükle!" : "Şimdi şarkıyı çal!", () -> SongActivity.open(this, sg.entryKey(), null)); }
-                col.addView(row, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 4, 10));
+                FrameLayout.LayoutParams tl = new FrameLayout.LayoutParams(Ui.dp(this, 150), Ui.WRAP, Gravity.CENTER_HORIZONTAL);
+                tl.leftMargin = flp.leftMargin; tl.topMargin = Ui.dp(this, st.fin ? 116 : 80);
+                if (st.fin || sStars <= 0) row.addView(t, tl);
+                if (isCur) { currentRow[0] = row; addMascot(row, flp.leftMargin, tr == null ? "Önce tab'ı yükle!" : st.fin ? "Hepsini birleştir!" : "Sıradaki bölüm!", go); }
+                col.addView(row, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 0, st.fin ? 12 : 4));
+                prevDone = sd;
             }
             // sandık
             final String ck = "chest:" + u.id;
@@ -499,7 +493,7 @@ public class MainActivity extends Activity {
             crow.addView(cn, cl);
             cn.setOnClickListener(v -> {
                 if (claimed) { Ui.shake(v); return; }
-                if (!done) { Ui.shake(v); new AlertDialog.Builder(this).setTitle("🎁 Ünite sandığı").setMessage("Ünitenin derslerini bitir ve ana şarkının parçasını tempoda temiz çal; sandık açılır.").setPositiveButton("Tamam", null).show(); return; }
+                if (!done) { Ui.shake(v); new AlertDialog.Builder(this).setTitle("🎁 Ünite sandığı").setMessage("Ünitenin bütün adımlarını ve finali bitir; sandık açılır.").setPositiveButton("Tamam", null).show(); return; }
                 prog.songTabs.put(ck, "1");
                 int n = 20 + new java.util.Random().nextInt(21);
                 prog.picks += n;
@@ -509,6 +503,14 @@ public class MainActivity extends Activity {
                 new AlertDialog.Builder(this).setTitle("🎁 " + u.title + " tamamlandı!").setMessage("👑 Şarkı öğrenildi\n🎸 +" + n + " pena\n⭐ +30 XP").setPositiveButton("Harika!", (d2, w2) -> render()).show();
             });
             col.addView(crow, Ui.lpm(this, Ui.MATCH, Ui.WRAP, 0, 6));
+            for (Curriculum.Song sg : ss) {
+                if (sg.main) continue;
+                TextView bt = Ui.text(this, "➕ Bonus: " + sg.title + " — " + sg.artist + (SongProgress.hasTab(prog, sg) ? "" : "  (tab yok)"), 13, unlocked ? Ui.BLUE : Ui.MUTED, true);
+                bt.setGravity(Gravity.CENTER);
+                bt.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 4));
+                if (unlocked) bt.setOnClickListener(v -> SongActivity.open(this, sg.entryKey(), null));
+                col.addView(bt);
+            }
             if (!done) open = false;
             if (done) prog.unlock("sarki");
         }
