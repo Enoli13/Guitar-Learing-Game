@@ -133,7 +133,7 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
             TabImport.Result tr = SongPath.tab(prog, song);
             if (u == null || song == null || tr == null) return;
             SongPath.Step st = SongPath.steps(u, song, tr).get(Integer.parseInt(a[1]));
-            for (Ex e : SongPath.build(u, song, tr, st, r)) { if (needsTiming(e)) addWithWarmups(e); else queue.add(e); }
+            queue.addAll(SongPath.build(u, song, tr, st, r)); // tempo merdiveni SongPath'te
         } else if ("review".equals(mode)) {
             for (Progress.Card c : prog.dueCards(15)) {
                 List<Ex> l = Gen.make(c.key, r);

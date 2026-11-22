@@ -136,6 +136,54 @@ public final class SongPath {
     static final String THEORY_GENS = "g: (alpha|semi|fretname|fretfind|staffname|ival|ivalear|scalespell|degree|chordspell|chordear|chordid|diatonic|keysig|relative|mode|rhythmval|progear|degreeear|chordfunc)\\b.*";
     static final String TECH_GENS = "g: (bend|path|pinch|swell)\\b.*";
 
+
+    static int round5(float x) { return Math.max(5, Math.round(x / 5) * 5); }
+
+    /**
+     * Tempo merdiveni: önce saniyede ~1 nota çıkacak kadar yavaş (en az 30 BPM), sonra adım adım hedefe.
+     * Adımlarda hedef şarkı temposunun %60'ı; finalde %60 → %80 → şarkının kendi temposu.
+     */
+    static List<Integer> ladder(TabImport.Result r, int a, int z, float tempo, float targetFrac, boolean fin) {
+        float span = r.start(z) + r.len(z) - r.start(a);
+        int n = Math.max(1, notesIn(r, a, z));
+        float perBeat = Math.max(0.5f, n / Math.max(1f, span));
+        // en sık iki nota arası (süslemeler hariç): en hızlı yer bile saniyede ~3 notayı geçmesin
+        float a0 = r.start(a), z0 = r.start(z) + r.len(z), prev = -1, minGap = 99;
+        for (Ex.Note x : r.notes) {
+            if (x.beat < a0 - 1e-3f || x.beat >= z0 - 1e-3f) continue;
+            if (prev >= 0 && x.beat - prev > 0.1f) minGap = Math.min(minGap, x.beat - prev);
+            prev = x.beat;
+        }
+        int byAvg = round5(60f / perBeat);                                   // ortalama ~1 nota/sn
+        int byFast = minGap < 99 ? round5(180f * minGap) : 70;              // en hızlı yer ~3 nota/sn
+        int start = Math.max(30, Math.min(Math.min(70, round5(tempo * 0.5f)), Math.min(byAvg, byFast)));
+        List<Integer> l = new ArrayList<>();
+        l.add(start);
+        if (!fin) {
+            int target = Math.max(start, Math.min(round5(tempo * targetFrac), round5(tempo)));
+            if (target - start >= 15) l.add(round5((start + target) / 2f));
+            if (target - start >= 5) l.add(target);
+        } else {
+            for (float f : new float[]{0.6f, 0.8f, 1f}) {
+                int b = f >= 1f ? Math.round(tempo) : round5(tempo * f);
+                if (b - l.get(l.size() - 1) >= 5) l.add(b);
+            }
+        }
+        return l;
+    }
+
+    static void addLadder(List<Ex> q, TabImport.Result r, int a, int z, Curriculum.Song song, String where, float tempo, List<Integer> bpms) {
+        for (int i = 0; i < bpms.size(); i++) {
+            int b = bpms.get(i);
+            Ex e = section(r, a, z, b, Ex.Type.PLAY_SEQ);
+            e.title = song.title + " • " + where + " • Tempo " + (i + 1) + "/" + bpms.size();
+            boolean full = b >= Math.round(tempo);
+            e.prompt = (i == 0 ? "Metronomla, çok yavaş: " : full ? "Şarkının kendi temposu: " : "Biraz hızlan: ")
+                    + b + " BPM" + (full ? "" : " (şarkı " + Math.round(tempo) + " BPM)");
+            q.add(e);
+        }
+    }
+
     /** Bir adımın görev kuyruğu. */
     public static List<Ex> build(Curriculum.Unit u, Curriculum.Song song, TabImport.Result r, Step st, Random rnd) {
         List<Ex> q = new ArrayList<>();
@@ -185,30 +233,16 @@ public final class SongPath {
             wait.title = song.title + " • " + where;
             wait.prompt = "Bölümün notalarını sırayla bul — acele yok";
             q.add(wait);
-            Ex play = section(r, st.fromM, st.toM, Math.max(45, Math.min(90, Math.round(tempo * 0.6f / 5) * 5)), Ex.Type.PLAY_SEQ);
-            play.title = song.title + " • " + where;
-            play.prompt = "Şimdi metronomla çal";
-            q.add(play);
+            addLadder(q, r, st.fromM, st.toM, song, where, tempo, ladder(r, st.fromM, st.toM, tempo, 0.6f, false));
         } else {
             intro.title = "🏁 Ünite finali: " + song.title;
-            intro.body = "Bu ünitede " + song.title + " şarkısının " + where + " bölümünü parça parça öğrendin. Şimdi hepsini birleştirip baştan sona çal. Temiz geçince ünite biter ve sandık açılır.";
+            intro.body = "Bu ünitede " + song.title + " şarkısının " + where + " bölümünü parça parça öğrendin. Şimdi hepsini birleştirip baştan sona çal: önce yavaş, sonra adım adım şarkının kendi temposuna kadar. Temiz geçince ünite biter ve sandık açılır.";
             q.add(intro);
             Ex wait = section(r, st.fromM, st.toM, tempo, Ex.Type.PLAY_NOTES);
             wait.title = song.title + " • " + where;
             wait.prompt = "Önce bütün bölümü sırayla bul";
             q.add(wait);
-            float slow = Math.max(45, Math.min(90, Math.round(tempo * 0.6f / 5) * 5));
-            Ex play = section(r, st.fromM, st.toM, slow, Ex.Type.PLAY_SEQ);
-            play.title = song.title + " • " + where;
-            play.prompt = "Final: hepsi birden, metronomla";
-            q.add(play);
-            float target = Math.min(tempo, Math.max(slow + 10, Math.round(tempo * 0.8f / 5) * 5));
-            if (target > slow) {
-                Ex fast = section(r, st.fromM, st.toM, target, Ex.Type.PLAY_SEQ);
-                fast.title = song.title + " • " + where;
-                fast.prompt = "Son tur: şarkının temposuna yakın (" + Math.round(target) + " BPM)";
-                q.add(fast);
-            }
+            addLadder(q, r, st.fromM, st.toM, song, where, tempo, ladder(r, st.fromM, st.toM, tempo, 1f, true));
         }
         return q;
     }
