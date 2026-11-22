@@ -57,6 +57,9 @@ public class ExerciseView extends LinearLayout {
         this.ex = e; this.host = host; this.bpmBonus = bpmBonus;
         removeAllViews();
         finished = false; running = false; misses = 0; recentHits.clear(); lastHitMidi = -99;
+        // önceki görevin görünümleri yeni göreve taşınmasın
+        tab = null; score = null; staff = null; fret = null; beats = null; meter = null;
+        startBtn = null; notation = null; timeline = null; laneIdx = null; W = null; next = 0; bendIdx = -1; chordPendingSeq = false;
         if (e.title != null && !e.title.isEmpty() && e.type != Ex.Type.INFO) addView(Ui.text(ctx, e.title, 14, Ui.MUTED, true));
         mascot = new Art.Mascot(ctx);
         if (e.type != Ex.Type.INFO) {
@@ -619,7 +622,7 @@ public class ExerciseView extends LinearLayout {
     }
 
     private void setTabState(int i, int s) {
-        if (tab != null && tab.state != null) { tab.state[i] = s; tab.invalidate(); }
+        if (tab != null && tab.state != null && i < tab.state.length) { tab.state[i] = s; tab.invalidate(); }
         if (score != null && i < score.state.length) { score.state[i] = s; score.invalidate(); }
         if (timeline != null && laneIdx != null && i < laneIdx.length && laneIdx[i] < timeline.state.length) { timeline.state[laneIdx[i]] = s; timeline.invalidate(); }
     }
