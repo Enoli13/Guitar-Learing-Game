@@ -156,6 +156,11 @@ public class ExerciseView extends LinearLayout {
     }
 
     private void addVisuals() {
+        if (ex.songLane) {
+            // şarkıda geçen akorlar en üstte: nasıl basılır
+            View strip = Views.chordStrip(ctx, ex.notes);
+            if (strip != null) addView(strip, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 0, 6));
+        }
         if (ex.staffMidis != null) {
             staff = new Views.Staff(ctx);
             staff.set(ex.staffMidis);
@@ -164,7 +169,7 @@ public class ExerciseView extends LinearLayout {
         if (ex.chordShape != null) {
             Views.Chord cv = new Views.Chord(ctx);
             cv.shape = ex.chordShape;
-            cv.name = ex.type == Ex.Type.CHOICE ? "?" : (ex.chord != null ? ex.chord.split("@")[0] : "");
+            cv.name = ex.type == Ex.Type.CHOICE ? "?" : (ex.chord != null ? ex.chord.split("@")[0] : (!ex.notes.isEmpty() && ex.notes.get(0).chord != null ? ex.notes.get(0).chord : ""));
             addView(cv);
         }
         if (!ex.fretDots.isEmpty()) {

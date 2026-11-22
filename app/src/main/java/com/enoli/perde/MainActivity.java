@@ -513,6 +513,27 @@ public class MainActivity extends Activity {
                 if (unlocked) bt.setOnClickListener(v -> SongActivity.open(this, sg.entryKey(), null));
                 col.addView(bt);
             }
+            // üniteyi sıfırla
+            boolean any = claimed;
+            int nSteps = SongPath.lessons(u).size();
+            for (int i = 0; i <= nSteps; i++) if (SongPath.stars(prog, u, i) >= 0) any = true;
+            if (any) {
+                TextView rs = Ui.text(this, "↺ Üniteyi sıfırla", 13, Ui.MUTED, true);
+                rs.setGravity(Gravity.CENTER);
+                rs.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 10));
+                final Curriculum.Unit uu = u;
+                rs.setOnClickListener(v -> new AlertDialog.Builder(this)
+                        .setTitle("↺ " + uu.title)
+                        .setMessage("Bu ünitenin Şarkı Yolu ilerlemesi (adım yıldızları, final, taç ve sandık) silinsin mi? Adımları baştan çalarak geçersin. Kazandığın XP ve penalar kalır; Yol'daki ilerlemen etkilenmez.")
+                        .setPositiveButton("Sıfırla", (d2, w2) -> {
+                            for (int i = 0; i <= nSteps; i++) prog.songTabs.remove(SongPath.key(uu, i));
+                            prog.songTabs.remove("chest:" + uu.id);
+                            prog.save();
+                            render();
+                        })
+                        .setNegativeButton("Vazgeç", null).show());
+                col.addView(rs);
+            }
             if (!done) open = false;
             if (done) prog.unlock("sarki");
         }

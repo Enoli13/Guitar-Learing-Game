@@ -362,6 +362,11 @@ public class SongActivity extends Activity implements ExerciseView.Host {
             cb.setOnCheckedChangeListener((b2, v) -> { showNames = v; preview.names = v; preview.setMode(preview.mode); });
             practiceBox.addView(cb);
         }
+        View chords = Views.chordStrip(this, r.notes);
+        if (chords != null) {
+            practiceBox.addView(Ui.text(this, "Şarkıdaki akorlar — nasıl basılır:", 13, Ui.MUTED, true), Ui.lpm(this, Ui.MATCH, Ui.WRAP, 10, 2));
+            practiceBox.addView(chords);
+        }
         preview = new ScoreView(this);
         preview.mode = staffMode ? ScoreView.Mode.STAFF : ScoreView.Mode.TAB;
         preview.names = showNames;

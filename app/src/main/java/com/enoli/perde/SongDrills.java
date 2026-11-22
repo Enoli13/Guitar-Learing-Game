@@ -349,6 +349,7 @@ public final class SongDrills {
         Ex e = playEx("Şarkının akoru", "Bölümdeki " + n.chord + " akorunu bas (kalından inceye " + voicing(n) + ") ve bir kez vur. İçindeki sesler: " + names + ".",
                 n.chord + " = " + names + ". Basmadığın teller çalmasın.");
         e.notes.add(copyAt(n, 0));
+        e.chordShape = Views.shapeOf(n);
         return e;
     }
 

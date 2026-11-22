@@ -274,22 +274,28 @@ public final class Views {
         public String shape = "x32010";
         public String name = "";
         private final Paint p = paint(Ui.TEXT);
-        private final float d;
-        public Chord(Context c) { super(c); d = c.getResources().getDisplayMetrics().density; }
-        @Override protected void onMeasure(int w, int h) { setMeasuredDimension(MeasureSpec.getSize(w), (int) (190 * d)); }
+        private float d;
+        private final float d0;
+        public boolean compact;   // şarkının akor şeridi için küçük diyagram
+        public Chord(Context c) { super(c); d0 = d = c.getResources().getDisplayMetrics().density; }
+        @Override protected void onMeasure(int w, int h) {
+            if (compact) setMeasuredDimension((int) (104 * d0), (int) (118 * d0));
+            else setMeasuredDimension(MeasureSpec.getSize(w), (int) (190 * d0));
+        }
 
         @Override protected void onDraw(Canvas c) {
+            d = compact ? d0 * 0.58f : d0;
             int[] f = Theory.parseShape(shape);
             int mx = 0, mn = 99;
             for (int v : f) if (v > 0) { mx = Math.max(mx, v); mn = Math.min(mn, v); }
             int base = mx <= 4 ? 1 : mn;
-            float w = 150 * d, left = (getWidth() - w) / 2, top = 40 * d, h = 120 * d;
+            float w = 150 * d, left = (getWidth() - w) / 2, top = compact ? 34 * d0 : 40 * d, h = 120 * d;
             float sx = w / 5, fy = h / 4;
             p.setTextAlign(Paint.Align.CENTER);
-            p.setTextSize(18 * d);
+            p.setTextSize(compact ? 15 * d0 : 18 * d);
             p.setTypeface(Typeface.DEFAULT_BOLD);
             p.setColor(Ui.TEXT);
-            c.drawText(name, getWidth() / 2f, 18 * d, p);
+            c.drawText(name, getWidth() / 2f, compact ? 16 * d0 : 18 * d, p);
             p.setTypeface(Typeface.DEFAULT);
             p.setColor(Ui.MUTED);
             p.setStrokeWidth(1.5f * d);
@@ -298,7 +304,7 @@ public final class Views {
                 p.setStrokeWidth(j == 0 && base == 1 ? 5 * d : 1.5f * d);
                 c.drawLine(left, top + j * fy, left + w, top + j * fy, p);
             }
-            if (base > 1) { p.setTextSize(13 * d); p.setColor(Ui.TEXT); c.drawText(base + "fr", left - 22 * d, top + fy * 0.65f, p); }
+            if (base > 1) { p.setTextSize(compact ? 11 * d0 : 13 * d); p.setColor(Ui.TEXT); if (compact) c.drawText(base + ". perdeden", getWidth() / 2f, top + h + 12 * d0, p); else c.drawText(base + "fr", left - 22 * d, top + fy * 0.65f, p); }
             // barre tespiti
             int minF = 99; int cnt = 0;
             for (int v : f) if (v > 0) minF = Math.min(minF, v);
@@ -319,6 +325,42 @@ public final class Views {
                 c.drawRoundRect(new RectF(left + a * sx - 9 * d, y - 9 * d, left + b * sx + 9 * d, y + 9 * d), 9 * d, 9 * d, p);
             }
         }
+    }
+
+
+    /** Ex.Note akor sütunundan diyagram şekli ("x02210", 10+ perdeler parantezli). */
+    public static String shapeOf(Ex.Note n) {
+        String[] fr = {"x", "x", "x", "x", "x", "x", "x"};
+        if (n.strs != null) for (int i = 0; i < n.strs.length; i++) if (n.strs[i] >= 1 && n.strs[i] <= 6) fr[n.strs[i]] = n.frets[i] > 9 ? "(" + n.frets[i] + ")" : String.valueOf(n.frets[i]);
+        StringBuilder sb = new StringBuilder();
+        for (int st = 6; st >= 1; st--) sb.append(fr[st]);
+        return sb.toString();
+    }
+
+    /** Parçada geçen akorların (göründükleri sırayla, aynı basış bir kez) nasıl basıldığını gösteren yatay şerit; akor yoksa null. */
+    public static View chordStrip(Context c, java.util.List<Ex.Note> notes) {
+        java.util.LinkedHashMap<String, String> seen = new java.util.LinkedHashMap<>();
+        for (Ex.Note n : notes) {
+            if (n.chord == null || n.strs == null || n.strs.length < 2) continue;
+            String sh = shapeOf(n);
+            String k = n.chord + "|" + sh;
+            if (!seen.containsKey(k)) seen.put(k, n.chord);
+            if (seen.size() >= 12) break;
+        }
+        if (seen.isEmpty()) return null;
+        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(c);
+        hs.setHorizontalScrollBarEnabled(false);
+        android.widget.LinearLayout row = new android.widget.LinearLayout(c);
+        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        for (java.util.Map.Entry<String, String> e : seen.entrySet()) {
+            Chord ch = new Chord(c);
+            ch.compact = true;
+            ch.name = e.getValue();
+            ch.shape = e.getKey().substring(e.getKey().indexOf('|') + 1);
+            row.addView(ch);
+        }
+        hs.addView(row);
+        return hs;
     }
 
     // ======================= VURUŞ / RİTİM ŞERİDİ =======================
