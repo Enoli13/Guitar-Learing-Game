@@ -24,6 +24,8 @@ public class ExerciseView extends LinearLayout {
         void withMic(Runnable then);
         void onResult(Ex ex, boolean pass, String message);
         void skipMicTasks();
+        /** Şarkı Yolu'nda çalma görevleri atlanamaz. */
+        default boolean micSkippable() { return true; }
     }
 
     private final Context ctx;
@@ -196,6 +198,7 @@ public class ExerciseView extends LinearLayout {
     }
 
     private void addSkipMic() {
+        if (!host.micSkippable()) return;
         Button skip = Ui.secondary(ctx, "Şu an gitar çalamam (1 saat atla)");
         skip.setTextSize(13);
         skip.setOnClickListener(v -> { stop(); host.skipMicTasks(); });

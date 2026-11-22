@@ -151,7 +151,7 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
         } else if ("tuner".equals(mode) || "calibrate".equals(mode)) {
             queue.addAll(Gen.make("g: " + ("tuner".equals(mode) ? "tune" : "calibrate"), r));
         }
-        if (System.currentTimeMillis() < skipMicUntil) dropMic();
+        if (System.currentTimeMillis() < skipMicUntil && !"songstep".equals(mode)) dropMic();
         if ("calibrate".equals(mode) || "tuner".equals(mode)) calOffered = true;
         heartsView.setText("test".equals(mode) ? "♥ " + hearts : "");
     }
@@ -215,9 +215,11 @@ public class LessonActivity extends Activity implements ExerciseView.Host {
 
     @Override public void onRequestPermissionsResult(int rc, String[] perms, int[] res) {
         if (rc == 7 && res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED && pendingMic != null) pendingMic.run();
-        else if (rc == 7) showFeedback(false, "Mikrofon izni olmadan çalma görevleri yapılamaz. Ayarlardan izin verebilir ya da \"Şu an çalamam\" ile geçebilirsin.", true);
+        else if (rc == 7) showFeedback(false, "songstep".equals(mode) ? "Şarkı Yolu'nda her görev gitarla geçilir; mikrofon izni gerekli. Ayarlardan izin verebilirsin." : "Mikrofon izni olmadan çalma görevleri yapılamaz. Ayarlardan izin verebilir ya da \"Şu an çalamam\" ile geçebilirsin.", true);
         pendingMic = null;
     }
+
+    @Override public boolean micSkippable() { return !"songstep".equals(mode); }
 
     @Override public void skipMicTasks() {
         skipMicUntil = System.currentTimeMillis() + 3600_000L;
