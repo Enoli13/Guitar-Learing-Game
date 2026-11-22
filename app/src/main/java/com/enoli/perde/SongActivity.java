@@ -65,6 +65,7 @@ public class SongActivity extends Activity implements ExerciseView.Host {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        Crash.install(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().setStatusBarColor(Ui.BG);
         prog = Progress.get(this);

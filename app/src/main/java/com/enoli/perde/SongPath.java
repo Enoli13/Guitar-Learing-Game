@@ -60,6 +60,8 @@ public final class SongPath {
             st.index = i; st.lesson = ls.get(i);
             st.title = ls.get(i).title;
             if (r != null) {
+                int guard = 0;
+                while (notesIn(r, m, m) == 0 && guard++ < r.measures) m = (m + 1) % r.measures; // boş ölçüleri atla
                 int L = 1;
                 while (notesIn(r, m, Math.min(r.measures - 1, m + L - 1)) < 6 && L < 4 && m + L < r.measures) L++;
                 if (m >= r.measures) m = Math.max(0, r.measures - L);
@@ -105,9 +107,30 @@ public final class SongPath {
         e.firstMeasure = a + 1;
         e.beatsPerBar = Math.max(1, Math.round(r.len(a)));
         e.songLane = true;
-        e.strictOctave = true;
+        e.strictOctave = false;
+        addTuningAlts(r, e.notes);
         e.bpm = bpm;
         return e;
+    }
+
+    /** Gitar çalınan görev mi? (soru/dokunma/şarkı söyleme değil) */
+    static boolean playsGuitar(Ex e) {
+        switch (e.type) {
+            case PLAY_NOTES: case PLAY_SEQ: case PLAY_CHORD: case CHANGES: case IMPROV: case TUNE: case BEND: return true;
+            case RHYTHM: return !e.tapMode;
+            default: return false;
+        }
+    }
+
+    /** Şarkı yarım/tam ses pes akortta ise standart akortta çalan da kabul edilsin. */
+    static void addTuningAlts(TabImport.Result r, List<Ex.Note> notes) {
+        int k = 0;
+        for (int i = 1; i <= 6; i++) {
+            int d = Theory.OPEN[i] - r.tuning[i];
+            if (i == 1) k = d; else if (d != k) return;
+        }
+        if (k == 0) return;
+        for (Ex.Note n : notes) n.tuneShift = k;
     }
 
     static final String THEORY_GENS = "g: (alpha|semi|fretname|fretfind|staffname|ival|ivalear|scalespell|degree|chordspell|chordear|chordid|diatonic|keysig|relative|mode|rhythmval|progear|degreeear|chordfunc)\\b.*";
@@ -131,17 +154,33 @@ public final class SongPath {
                 c.body = st.lesson.cards.get(i);
                 q.add(c);
             }
-            // konunun teori soruları (en fazla 4) ve teknik alıştırmalar (en fazla 2)
-            int th = 0, te = 0;
+            // Şarkı Yolu'nda soru yok: konu, gitar çalınarak öğrenilir.
+            // 1) Konunun çalma alıştırmaları (dersin kendi teknik/çalma görevleri, en fazla 2)
+            int te = 0;
             for (String s : st.lesson.specs) {
-                boolean isQ = s.startsWith("q:") || s.matches(THEORY_GENS);
-                boolean isT = s.matches(TECH_GENS);
-                if (isQ && th < 4) for (Ex e : Gen.make(s, rnd)) { if (th++ < 4) q.add(e); }
-                else if (isT && te < 2) for (Ex e : Gen.make(s, rnd)) { if (te++ < 2) q.add(e); }
+                if (te >= 2) break;
+                if (s.startsWith("q:")) continue;
+                List<Ex> made;
+                try { made = Gen.make(s, rnd); } catch (Exception ex) { continue; }
+                for (Ex e : made) if (te < 2 && playsGuitar(e)) { q.add(e); te++; }
             }
-            // aynı konu, şarkının bu bölümünden
+            // 2) Aynı konu, şarkının bu bölümündeki gerçek seslerle (çalarak)
             List<Ex.Note> notes = TabImport.slice(r, st.fromM, st.toM, 4);
-            q.addAll(SongDrills.make(r, notes, u.id, 3, rnd));
+            for (Ex e : SongDrills.play(r, notes, u.id, 2, rnd)) {
+                if (e.type == Ex.Type.TUNE && !r.standardTuning()) continue;
+                addTuningAlts(r, e.notes);
+                q.add(e);
+            }
+            // 3) Bölüm uzunsa önce yarısı
+            if (st.toM > st.fromM) {
+                int mid = st.fromM + (st.toM - st.fromM) / 2;
+                Ex half = section(r, st.fromM, mid, tempo, Ex.Type.PLAY_NOTES);
+                if (!half.notes.isEmpty()) {
+                    half.title = song.title + " • ölçü " + (st.fromM + 1) + (mid > st.fromM ? "–" + (mid + 1) : "");
+                    half.prompt = "Bölümün ilk yarısı: notaları sırayla bul";
+                    q.add(half);
+                }
+            }
             Ex wait = section(r, st.fromM, st.toM, tempo, Ex.Type.PLAY_NOTES);
             wait.title = song.title + " • " + where;
             wait.prompt = "Bölümün notalarını sırayla bul — acele yok";

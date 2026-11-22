@@ -2,12 +2,13 @@
 
 **Perde**, gitarı ve gitar için müzik teorisini **sıfırdan ustalığa** öğreten bir Android uygulamasıdır. Duolingo'nun oyunlaştırmasını, Anki'nin aralıklı tekrarını ve mikrofonla gerçek zamanlı çalma kontrolünü tek bir uygulamada birleştirir.
 
-> "Metronomu 60'a al, çal, sonra 'yaptım' diye işaretle" yok. Çalma görevlerinde **mikrofon seni dinler**; yanlış notada ya da zamansız vuruşta görev **o anda** başarısız olur.
+> "Metronomu 60'a al, çal, sonra 'yaptım' diye işaretle" yok. Çalma görevlerinde **mikrofon seni dinler**; metronomlu görevlerde yanlış ya da zamansız nota hata sayılır, bekleme modunda doğru notayı bulana kadar ilerlemezsin.
 
 ## Özellikler
 
 ### 🎤 Mikrofonla gerçek zamanlı kontrol
 - **Nota tespiti:** YIN perde algoritması, vuruş sonrası analizle çalınan yeni notayı yakalar (legato/hammer-on/pull-off dahil).
+- **Beklenen notayı dinleme:** Önceki teller çalmaya devam ederken (arpej, açık teller) tek perde algılayıcı şaşırabilir; bu yüzden her vuruştan sonra beklenen notanın harmoniklerinde yeni enerji belirip belirmediğine de bakılır. Oktav farkı ve pes akortlu şarkıları standart akortta çalmak kabul edilir. Bekleme modunda yanlış nota görevi bitirmez, tekrar denersin.
 - **Vuruş zamanlaması:** Spektral akı (spectral flux) ile vuruş anı tespiti; metronom tıkları filtrelenir.
 - **Akor tanıma:** Harmonik ağırlıklı kromagram şablonlarıyla (majör, minör, power, 7'li, sus, slash…).
 - **Bend ölçer:** Teli bükerken ses yüksekliği canlı izlenir; hedefi tutturmalı ve aşmamalısın.
@@ -26,7 +27,7 @@ Her ünite, onu zaten biliyorsan **sınavla atlanabilir**.
 XP ve seviyeler (Çırak → Efsane), günlük hedef halkası, seri (🔥) ve seri dondurucu, değişken ödüllü sandıklar, 22 rozet, pena (🎸) ile dükkân, ders yıldızları, günlük hatırlatma bildirimi. Tasarım; Octalysis, Hook modeli (tetikleyici → eylem → değişken ödül → yatırım) ve Tiny Habits (küçük başla, anında kutla) ilkelerine dayanır.
 
 ### 🎵 Şarkı Yolu
-**Şarkı Yolu:** Yol'dan ayrı ilerleyen ikinci bir yol. Aynı 29 ünitenin konuları, ama her zikzak adımında konunun teorisi şarkının küçük bir bölümü (intro, riff, solo …) üzerinden anlatılır, o bölümden sorular gelir ve bölüm çalınır; her adım şarkının bir sonraki bölümünü öğretir. Ünite finalinde öğrenilen bütün bölümler birleştirilip tempoda çalınır, ardından 👑 ve ünite sandığı gelir.
+**Şarkı Yolu:** Yol'dan ayrı ilerleyen ikinci bir yol. Aynı 29 ünitenin konuları, ama her zikzak adımında konunun teorisi şarkının küçük bir bölümü (intro, riff, solo …) üzerinden anlatılır, soru yerine her görevde gitar çalınır (bölümün notaları, akorları, aralıkları, gamı şarkıdan çalınarak öğrenilir) ve bölüm önce yarı yarıya, sonra bütün olarak çalınır; her adım şarkının bir sonraki bölümünü öğretir. Ünite finalinde öğrenilen bütün bölümler birleştirilip tempoda çalınır, ardından 👑 ve ünite sandığı gelir.
 
 - **Dosyadan:** Guitar Pro (.gp, .gp5, .gp4, .gp3) ve MusicXML (.musicxml, .mxl, .xml). Ritim, akort ve teknikler (bend, hammer-on, slide) dosyadan okunur; birden çok parça varsa hangisini çalacağını seçersin. Başka uygulamadan "Paylaş → Perde" de çalışır.
 - **Metinden:** ASCII tab'ı yapıştır ya da elle yaz (tel etiketlerinden akort da okunur).

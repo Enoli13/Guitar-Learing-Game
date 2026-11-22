@@ -65,6 +65,11 @@ public class ExerciseView extends LinearLayout {
             addView(row, Ui.lpm(ctx, Ui.MATCH, Ui.WRAP, 4, 12));
             Ui.slideUp(row);
         }
+        if ((e.type == Ex.Type.PLAY_NOTES || e.type == Ex.Type.PLAY_SEQ) && e.notes.isEmpty()) {
+            addStatus("Bu bölümde çalınacak nota yok.");
+            h.post(() -> done(true, "Geçildi"));
+            return;
+        }
         switch (e.type) {
             case INFO: buildInfo(); break;
             case CHOICE: buildChoice(); break;
@@ -219,6 +224,7 @@ public class ExerciseView extends LinearLayout {
     private boolean matchesNote(Ex.Note exp, int got, boolean strict) {
         if (matches(exp.midi, got, strict)) return true;
         if (exp.alts != null) for (int a : exp.alts) if (matches(a, got, strict)) return true;
+        if (exp.tuneShift != 0 && matches(exp.midi + exp.tuneShift, got, strict)) return true;
         return false;
     }
 
@@ -327,71 +333,98 @@ public class ExerciseView extends LinearLayout {
         addStatus("🎤 Dinliyorum… çal");
         next = 0;
         if (staff != null) staff.current = 0;
+        wrongs = 0;
         listen(new AudioIn.Listener() {
             boolean pending;
             public void onFrame(long n, float m, float c, float db) { showHeard(m); }
             public void onOnset(long t, float db) {
                 if (pending || next >= ex.notes.size()) return;
                 Ex.Note exp = ex.notes.get(next);
-                if (exp.chord == null) return;
+                final int idx = next;
+                if (exp.chord == null) {
+                    // tek nota: perde algılayıcı (YIN) kaçırsa da harmoniklerdeki yeni enerjiye bakılır
+                    h.postDelayed(() -> {
+                        if (finished || next != idx || lastAcceptOnset >= t - 60_000_000L) return;
+                        if (heardNote(t, exp)) { acceptWait(idx, t, exp.midi); return; }
+                        if (lastYinT > 0 && Math.abs(lastYinT - t) < 90_000_000L) {
+                            int m = lastYinMidi;
+                            if (stillRinging(m, t)) return;
+                            String want = ex.hideTarget ? "başka bir nota" : Theory.midiName(exp.midi);
+                            wrongAttempt(idx, "Duyduğum " + Theory.midiName(m) + ", beklenen " + want);
+                        }
+                    }, 190);
+                    return;
+                }
                 pending = true;
                 status.setText("Akor dinleniyor…");
                 h.postDelayed(() -> {
                     pending = false;
-                    if (finished) return;
+                    if (finished || next != idx) return;
                     float[] ch = host.audio().chromaAt(t + 40_000_000L, 300);
                     if (ch == null) return;
                     String bad = judgePcs(ch, exp.chordPcs, exp.power);
-                    if (bad != null) {
-                        String msg = exp.chord + " bekleniyordu, " + bad + " gibi duyuldu. Bütün teller temiz mi?";
-                        if (forgive(msg)) return;
-                        markWait(next, 2);
-                        done(false, msg);
-                        return;
-                    }
-                    markWait(next, 1);
-                    mascot.pop();
+                    if (bad != null) { wrongAttempt(idx, exp.chord + " bekleniyordu, " + bad + " gibi duyuldu. Bütün teller temiz mi?"); return; }
                     for (int m : ScoreView.midis(exp)) rememberHit(m, t);
-                    lastHitMidi = exp.midi; lastHitT = t;
-                    next++;
-                    if (next >= ex.notes.size()) { done(true, passMsg("Harika!")); return; }
-                    if (tab != null) { tab.current = next; tab.invalidate(); }
-                    if (score != null) { score.current = next; score.invalidate(); }
-                    status.setText("Doğru! Sıradaki…");
-                    status.setTextColor(Ui.GREEN);
+                    acceptWait(idx, t, exp.midi);
                 }, 360);
             }
             public void onNote(long t, float midi, boolean attack) {
+                if (next >= ex.notes.size()) return;
                 int m = Math.round(midi);
+                if (attack) { lastYinMidi = m; lastYinT = t; }
                 Ex.Note exp = ex.notes.get(next);
                 if (exp.chord != null || pending) return; // akor: vuruş + kroma ile
                 // önceki telin titreşimi / el değmesi gibi vuruşsuz perde değişimlerini yok say (legato hariç)
                 if (!attack && !isLegato(exp)) return;
-                if (matchesNote(exp, m, ex.strictOctave)) {
-                    markWait(next, 1);
-                    mascot.pop();
-                    rememberHit(m, t);
-                    lastHitMidi = m; lastHitT = t;
-                    next++;
-                    if (next >= ex.notes.size()) { done(true, passMsg("Harika!")); return; }
-                    if (tab != null) { tab.current = next; tab.invalidate(); }
-                    if (score != null) { score.current = next; score.invalidate(); }
-                    if (staff != null) { staff.current = next; staff.invalidate(); }
-                    status.setText("Doğru! Sıradaki…");
-                    status.setTextColor(Ui.GREEN);
-                    return;
-                }
-                if (lastHitMidi > 0 && (m == lastHitMidi || Math.abs(m - lastHitMidi) == 12) && !attack) return;
-                if (!attack && t - lastHitT < 250_000_000L) return;
-                if (stillRinging(m, t)) return; // önceki telin titreşimi: yeni notayı beklemeye devam et
-                String want = ex.hideTarget ? "başka bir nota" : Theory.midiName(exp.midi);
-                String msg = "Yanlış nota: " + Theory.midiName(m) + " çaldın, beklenen " + want;
-                if (forgive(msg)) return;
-                markWait(next, 2);
-                done(false, msg);
+                if (matchesNote(exp, m, ex.strictOctave && !ex.songLane)) { acceptWait(next, t, m); return; }
+                // yanlış görünen perde hemen hata sayılmaz: vuruştan sonra harmonik kontrolü karar verir
             }
         });
         addSkipMic();
+    }
+
+    private int wrongs;
+    private long lastAcceptOnset = -1, lastYinT = -1;
+    private int lastYinMidi = -1;
+
+    /** Beklenen nota (ya da alternatifi) bu vuruşla çalındı mı? Oktav farkı kabul. */
+    private boolean heardNote(long t, Ex.Note exp) {
+        AudioIn a = host.audio();
+        if (a == null) return false;
+        if (a.heardExpected(t, exp.midi)) return true;
+        if (exp.alts != null) for (int x : exp.alts) if (a.heardExpected(t, x)) return true;
+        if (exp.tuneShift != 0 && a.heardExpected(t, exp.midi + exp.tuneShift)) return true;
+        return false;
+    }
+
+    private void acceptWait(int idx, long t, int m) {
+        if (finished || idx != next) return;
+        markWait(idx, 1);
+        if (mascot != null) mascot.pop();
+        rememberHit(m, t);
+        lastHitMidi = m; lastHitT = t; lastAcceptOnset = t;
+        wrongs = 0;
+        next++;
+        if (next >= ex.notes.size()) { done(true, passMsg("Harika!")); return; }
+        if (tab != null) { tab.current = next; tab.invalidate(); }
+        if (score != null) { score.current = next; score.invalidate(); }
+        if (staff != null) { staff.current = next; staff.invalidate(); }
+        status.setText("Doğru! Sıradaki…");
+        status.setTextColor(Ui.GREEN);
+    }
+
+    /** Yanlış deneme görevi bitirmez: uyarı verir, aynı notada 3 kez olursa (şarkı dışı görevlerde) görev kaybedilir. */
+    private void wrongAttempt(int idx, String msg) {
+        if (finished || idx != next) return;
+        wrongs++;
+        markWait(idx, 2);
+        h.postDelayed(() -> { if (!finished && next == idx) markWait(idx, 0); }, 700);
+        if (!ex.songLane && wrongs >= 3) { done(false, msg); return; }
+        Ex.Note exp = ex.notes.get(idx);
+        String hint = wrongs >= 2 && exp.string > 0 && exp.chord == null && !ex.hideTarget ? "  İpucu: " + exp.string + ". tel, " + exp.fret + ". perde" : "";
+        status.setText("⚠ " + msg + " — tekrar dene." + hint);
+        status.setTextColor(Ui.YELLOW);
+        if (mascot != null) mascot.setMood(Art.Mascot.Mood.THINK);
     }
 
     private void markWait(int i, int st) {
@@ -476,7 +509,10 @@ public class ExerciseView extends LinearLayout {
     /** Tek yol: sabit tolerans; ısınma görevleri kendi (daha geniş) toleransını getirir. */
     private float windowMs() { return Math.max(prog.timingWindowMs, ex.tolMs); }
 
-    private int allowedMisses() { return 0; }
+    private int allowedMisses() {
+        // şarkı bölümleri uzun: her 6 notaya bir hata hakkı
+        return ex.songLane ? Math.max(1, ex.notes.size() / 6) : 0;
+    }
 
     /** Kolay modda küçük hataları affeder: true dönerse görev devam eder. */
     private boolean forgive(String msg) {
@@ -549,6 +585,7 @@ public class ExerciseView extends LinearLayout {
         long tn = tAt(next), lo = tn - W[next], hi = tn + W[next];
         if (t < beatT(0) - 300_000_000L) return; // sayım sırasında yok say
         if (t < lo) {
+            if (ex.songLane) return; // şarkıda titreşen teller sahte "erken nota" üretebilir: yok say
             if (lastHitMidi > 0 && (m == lastHitMidi || Math.abs(m - lastHitMidi) == 12 || t - lastHitT < 120_000_000L)) return;
             if (stillRinging(m, t)) return;
             if (!attack && lastHitMidi < 0) return;
@@ -556,7 +593,7 @@ public class ExerciseView extends LinearLayout {
             return;
         }
         if (t <= hi) {
-            if (isBend ? matches(expMidi, m, true) : matchesNote(exp, m, true)) {
+            if (isBend ? matches(expMidi, m, true) : matchesNote(exp, m, !ex.songLane)) {
                 setTabState(next, 1);
                 rememberHit(m, t);
                 lastHitMidi = m; lastHitT = t;
@@ -566,7 +603,16 @@ public class ExerciseView extends LinearLayout {
             }
             if (!attack && lastHitMidi > 0 && m == lastHitMidi) return;
             if (stillRinging(m, t)) return; // önceki tel çalmaya devam ediyor; doğru nota gelirse yine kabul edilir
-            failSeq(next, "Yanlış nota: " + Theory.midiName(m) + " (beklenen " + Theory.midiName(expMidi) + ")", true);
+            if (!attack) return;
+            // perde algılayıcı yanılmış olabilir: harmoniklere bakıp öyle karar ver
+            final int idx = next; final int em = expMidi; final boolean bend = isBend;
+            chordPendingSeq = true;
+            h.postDelayed(() -> {
+                chordPendingSeq = false;
+                if (finished || !running || next != idx) return;
+                if (!bend && heardNote(t, exp)) { acceptSeq(idx, t, exp.midi); return; }
+                failSeq(idx, "Yanlış nota: " + Theory.midiName(m) + " (beklenen " + Theory.midiName(em) + ")", true);
+            }, 190);
             return;
         }
         failSeq(next, "Geç kaldın: " + Math.round((t - tn) / 1e6) + " ms", true);
@@ -609,7 +655,19 @@ public class ExerciseView extends LinearLayout {
     private void seqOnset(long t) {
         if (!running || W == null || next >= W.length || chordPendingSeq) return;
         Ex.Note exp = ex.notes.get(next);
-        if (exp.chord == null) return;
+        if (exp.chord == null) {
+            // tek nota: YIN hiç perde vermese bile vuruş penceredeyse harmoniklerle doğrula
+            long tn = tAt(next);
+            if (t < tn - W[next] || t > tn + W[next]) return;
+            if (exp.label != null && exp.label.startsWith("b")) return;
+            final int idx = next;
+            h.postDelayed(() -> {
+                if (finished || !running || next != idx || chordPendingSeq) return;
+                if (lastHitT >= t - 60_000_000L) return;
+                if (heardNote(t, exp)) acceptSeq(idx, t, exp.midi);
+            }, 190);
+            return;
+        }
         long tn = tAt(next);
         if (t < tn - W[next] || t > tn + W[next]) return; // pencere dışı vuruşlar: zamanında olanı bekle
         chordPendingSeq = true;
@@ -626,6 +684,14 @@ public class ExerciseView extends LinearLayout {
             lastHitMidi = exp.midi; lastHitT = t;
             if (next == idx) next++;
         }, 330);
+    }
+
+    private void acceptSeq(int idx, long t, int m) {
+        if (finished || idx != next) return;
+        setTabState(idx, 1);
+        rememberHit(m, t);
+        lastHitMidi = m; lastHitT = t;
+        next++;
     }
 
     private void failSeq(int i, String msg, boolean skipNote) {

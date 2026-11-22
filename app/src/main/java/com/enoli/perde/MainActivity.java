@@ -30,6 +30,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        Crash.install(this);
         getWindow().setStatusBarColor(Ui.BG);
         getWindow().setNavigationBarColor(Ui.SURFACE);
         cur = Curriculum.get(this);
@@ -53,6 +54,7 @@ public class MainActivity extends Activity {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 3);
         Reminder.schedule(this);
         if (!prog.onboarded) onboarding();
+        else Crash.showIfAny(this);
     }
 
     @Override protected void onResume() {

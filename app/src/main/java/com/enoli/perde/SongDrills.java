@@ -276,4 +276,130 @@ public final class SongDrills {
         e.explain = "Tab dosyasındaki akort: " + c + ". Gitarını buna göre ayarlamazsan doğru perdeyi bassan bile ses farklı çıkar.";
         return e;
     }
+
+    // ------------------------------------------------------------------ ÇALARAK ÖĞREN (Şarkı Yolu)
+
+    static Ex.Note copyAt(Ex.Note n, float beat) {
+        Ex.Note c = new Ex.Note(n.string, n.fret, beat, 1);
+        c.midi = n.midi; c.alts = n.alts; c.chord = n.chord; c.chordPcs = n.chordPcs; c.power = n.power;
+        c.strs = n.strs; c.frets = n.frets;
+        return c;
+    }
+
+    static Ex playEx(String title, String prompt, String explain) {
+        Ex e = new Ex();
+        e.type = Ex.Type.PLAY_NOTES;
+        e.title = title; e.prompt = prompt; e.explain = explain;
+        e.showTab = true;
+        return e;
+    }
+
+    /**
+     * Şarkı Yolu için konuyu ÇALARAK öğreten görevler: soru yok, her görevde gitar çalınır.
+     * Konu (nota adı, akor, aralık, gam, ritim, akort) şarkının bu bölümündeki gerçek seslerle çalıştırılır.
+     */
+    public static List<Ex> play(TabImport.Result r, List<Ex.Note> notes, String unit, int count, Random rnd) {
+        List<Ex> out = new ArrayList<>();
+        Kind[] ks = kindsFor(unit);
+        Set<String> seen = new LinkedHashSet<>();
+        for (int guard = 0; out.size() < count && guard < count * 10; guard++) {
+            Kind k = guard < ks.length ? ks[guard] : ks[rnd.nextInt(ks.length)];
+            Ex e = null;
+            switch (k) {
+                case NOTE: e = playNote(notes, rnd, false); break;
+                case STAFF: e = playNote(notes, rnd, true); break;
+                case CHORD: e = playChord(notes, rnd); break;
+                case INTERVAL: e = playInterval(notes, rnd); break;
+                case CENTER: case SCALE: e = playScale(notes); break;
+                case RHYTHM: e = null; break; // ritim: bölümün metronomla çalınması zaten ritim görevi
+                case TUNING: e = playTuning(r); break;
+            }
+            if (e == null) continue;
+            if (!seen.add(e.prompt)) continue;
+            out.add(e);
+        }
+        if (out.isEmpty()) { Ex e = playNote(notes, rnd, false); if (e != null) out.add(e); }
+        return out;
+    }
+
+    static Ex playNote(List<Ex.Note> notes, Random r, boolean staff) {
+        List<Ex.Note> s = singles(notes);
+        if (s.isEmpty()) return null;
+        Ex.Note n = s.get(r.nextInt(s.size()));
+        int pc = Theory.pc(n.midi);
+        String name = Theory.nameWithSolfej(pc);
+        Ex e = playEx("Şarkının notası", staff
+                ? "Porteye yazılmış bu nota şarkıdan: " + name + ". Gitarda bul ve çal."
+                : "Şarkının bu bölümünde " + name + " notası var: " + Theory.STRING_NAME[n.string] + ", " + n.fret + ". perde. Çal.",
+                Theory.STRING_NAME[n.string] + " teli, " + n.fret + ". perde = " + name + ".");
+        e.notes.add(copyAt(n, 0));
+        if (staff) { e.staffMidis = new int[]{n.midi + 12}; e.showTab = false; }
+        return e;
+    }
+
+    static Ex playChord(List<Ex.Note> notes, Random r) {
+        List<Ex.Note> ch = new ArrayList<>();
+        for (Ex.Note n : notes) if (n.chord != null && n.strs != null && n.chordPcs != null) ch.add(n);
+        if (ch.isEmpty()) return null;
+        Ex.Note n = ch.get(r.nextInt(ch.size()));
+        int[] all = ScoreView.midis(n).clone();
+        Arrays.sort(all);
+        StringBuilder names = new StringBuilder();
+        for (int x : all) { if (names.length() > 0) names.append(", "); names.append(Theory.SHARP[Theory.pc(x)]); }
+        Ex e = playEx("Şarkının akoru", "Bölümdeki " + n.chord + " akorunu bas (kalından inceye " + voicing(n) + ") ve bir kez vur. İçindeki sesler: " + names + ".",
+                n.chord + " = " + names + ". Basmadığın teller çalmasın.");
+        e.notes.add(copyAt(n, 0));
+        return e;
+    }
+
+    static Ex playInterval(List<Ex.Note> notes, Random r) {
+        List<Ex.Note> s = singles(notes);
+        List<Integer> idx = new ArrayList<>();
+        for (int i = 0; i + 1 < s.size(); i++) {
+            int d = Math.abs(s.get(i + 1).midi - s.get(i).midi);
+            if (d >= 1 && d <= 12) idx.add(i);
+        }
+        if (idx.isEmpty()) return null;
+        int i = idx.get(r.nextInt(idx.size()));
+        Ex.Note a = s.get(i), b = s.get(i + 1);
+        int d = Math.abs(b.midi - a.midi);
+        Ex e = playEx("Şarkıdaki aralık", "Şarkıda art arda gelen iki ses: " + Theory.SHARP[Theory.pc(a.midi)] + " → " + Theory.SHARP[Theory.pc(b.midi)]
+                + ". Aralarında " + d + " yarım ses var = " + Theory.IVAL_NAME[d] + ". İkisini sırayla çal ve aralığı kulağınla duy.",
+                d + " yarım ses = " + Theory.IVAL_NAME[d] + ".");
+        e.notes.add(copyAt(a, 0)); e.notes.add(copyAt(b, 1));
+        e.audio = new float[]{a.midi, b.midi};
+        return e;
+    }
+
+    static Ex playScale(List<Ex.Note> notes) {
+        // bölümün kullandığı sesler, kalından inceye, her ses bir kez
+        List<Ex.Note> s = singles(notes);
+        java.util.TreeMap<Integer, Ex.Note> by = new java.util.TreeMap<>();
+        for (Ex.Note n : s) if (!by.containsKey(n.midi)) by.put(n.midi, n);
+        if (by.size() < 3) return null;
+        float[] w = weights(notes);
+        int best = 0;
+        for (int i = 1; i < 12; i++) if (w[i] > w[best]) best = i;
+        boolean[] used = new boolean[12];
+        for (int m : by.keySet()) used[Theory.pc(m)] = true;
+        String found = null;
+        for (String[] sc : SCALES) if (contains(best, pcs(sc[1]), used)) { found = ChordDict.ROOT[best] + " " + sc[0]; break; }
+        StringBuilder sb = new StringBuilder();
+        for (int m : by.keySet()) { if (sb.length() > 0) sb.append(' '); sb.append(Theory.SHARP[Theory.pc(m)]); }
+        Ex e = playEx("Bölümün gamı", "Bu bölüm şu sesleri kullanıyor: " + sb + (found != null ? " — hepsi " + found + " içinde" : "")
+                + ". Merkez nota " + Theory.SHARP[best] + ". Kalından inceye sırayla çal.",
+                found != null ? "Bölümün sesleri " + found + " gamından." : "Bölümün sesleri: " + sb + ".");
+        float b = 0;
+        int k = 0;
+        for (Ex.Note n : by.values()) { if (k++ >= 8) break; e.notes.add(copyAt(n, b)); b += 1; }
+        return e;
+    }
+
+    static Ex playTuning(TabImport.Result r) {
+        Ex e = new Ex();
+        e.type = Ex.Type.TUNE;
+        e.title = "Şarkının akordu";
+        e.prompt = "Bu şarkı " + TabImport.tuningName(r.tuning) + " akortta. Telleri akort et.";
+        return e;
+    }
 }

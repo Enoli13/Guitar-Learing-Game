@@ -88,6 +88,65 @@ public class AudioIn {
         return Dsp.chroma(x, SR);
     }
 
+    /**
+     * Notaya göre dinleme (polifonik ortamda): vuruştan sonra her aday notanın harmoniklerinde
+     * vuruştan önceye göre ne kadar YENİ enerji belirdiğini ölçer. Önceki teller titreşmeye devam etse de
+     * yeni çalınan notayı bulur. Dönüş: her aday için 0..1 arası pay (adaylar arasında normalize).
+     */
+    public synchronized float[] newEnergy(long onsetNanos, int[] midis) {
+        long s0 = (onsetNanos - baseNanos) * SR / 1_000_000_000L;
+        int n = 4096;
+        long postA = s0 + SR * 30 / 1000, preA = s0 - n - SR * 15 / 1000;
+        if (postA + n > totalSamples || preA < totalSamples - ring.length + 1 || preA < 0) return null;
+        float[] post = ringSlice(postA, n), pre = ringSlice(preA, n);
+        float[] out = new float[midis.length];
+        for (int i = 0; i < midis.length; i++) out[i] = harmonicGain(post, pre, midis[i]);
+        return out;
+    }
+
+    /** Aday notanın harmoniklerinde vuruşla gelen enerji; temel ya da 2. harmonik de yükselmiş olmalı. */
+    static float harmonicGain(float[] post, float[] pre, int midi) {
+        double f0 = 440 * Math.pow(2, (midi - 69) / 12.0);
+        float sum = 0, low = 0, max = 0;
+        for (int h = 1; h <= 6; h++) {
+            double f = f0 * h;
+            if (f > SR / 2.5) break;
+            float a = goertzel(post, f), b = goertzel(pre, f);
+            float g = Math.max(0, a - 1.1f * b);
+            float w = (float) (1 / Math.sqrt(h));
+            sum += w * g;
+            if (h <= 2) low = Math.max(low, g);
+            max = Math.max(max, g);
+        }
+        if (max <= 0 || low < 0.2f * max) return 0;
+        return sum;
+    }
+
+    static float goertzel(float[] x, double f) {
+        int n = x.length;
+        double w = 2 * Math.PI * f / SR, c = 2 * Math.cos(w), s1 = 0, s2 = 0;
+        for (int i = 0; i < n; i++) {
+            double win = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (n - 1));
+            double s = x[i] * win + c * s1 - s2;
+            s2 = s1; s1 = s;
+        }
+        double p = s1 * s1 + s2 * s2 - c * s1 * s2;
+        return (float) Math.sqrt(Math.max(0, p)) / n;
+    }
+
+    /**
+     * Beklenen nota bu vuruşla mı çalındı? Beklenen notanın yeni enerjisi, yarım/tam ses komşularından
+     * (yanlış perde) belirgin şekilde yüksek olmalı. Oktav hataları kabul edilir.
+     */
+    public boolean heardExpected(long onsetNanos, int expected) {
+        int[] c = {expected, expected - 1, expected + 1, expected - 2, expected + 2};
+        float[] e = newEnergy(onsetNanos, c);
+        if (e == null || e[0] <= 0) return false;
+        float rival = 0;
+        for (int i = 1; i < c.length; i++) rival = Math.max(rival, e[i]);
+        return e[0] >= 1.4f * rival && e[0] > 1e-4f;
+    }
+
     // ---- analiz durumu ----
     private final float[] frame = new float[W * 2];
     private final float[] scratch = new float[W + 2];

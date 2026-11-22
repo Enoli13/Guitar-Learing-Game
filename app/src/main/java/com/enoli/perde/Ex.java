@@ -88,6 +88,7 @@ public class Ex implements Cloneable {
         public boolean rest;
         public String label;            // ör. "h" hammer, "p" pull, "b" bend
         public int[] alts;              // akor sütunu: kabul edilen diğer perdeler
+        public int tuneShift;           // şarkı pes akortta: standart akortta çalınan perde farkı (kabul edilir)
         public int[] strs, frets;       // akor sütununun tüm telleri/perdeleri
         public String chord;            // akor sözlüğünden ad (ör. "G5", "Am", "C/E"); null = tek nota
         public int[] chordPcs;
